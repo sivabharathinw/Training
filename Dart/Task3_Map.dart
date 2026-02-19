@@ -51,7 +51,4 @@ if(value==0){
 return value;
 });
 print("after done condition based update the english marks will be :$marks");
-
-
-
 }
