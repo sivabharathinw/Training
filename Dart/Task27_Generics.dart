@@ -2,7 +2,7 @@ class Box<T>{//here <T> means Type in dart
 T data;
 Box(this.data);
 void display(){
-  print(data);
+  print(data);  
 }
 }
 
