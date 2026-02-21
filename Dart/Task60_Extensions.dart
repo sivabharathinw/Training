@@ -1,3 +1,4 @@
+
 extension myextension on int{
 int add(int other){//automatically current number is passed when we called the method that is represented by this
 //if i want to pass another parameter represnts  in a method paramater
