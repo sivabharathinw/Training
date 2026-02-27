@@ -7,15 +7,168 @@ import '../model/restaurant.dart';
 import '../model/food_item.dart';
 import '../model/cart_item.dart';
 import '../model/order.dart';
+import '../model/app_state.dart';
 
-//this acts as interface between db and view so here we will write all the logic to fetch data from db and 
-//provide it to view and also logic to add items to cart and place order 
-//so 1st for that we need create a provider for local storage service to access db methods and
-// then create providers for restaurant list, menu items, cart and orders
 
-final localStorageServiceProvider = Provider<LocalStorageService>((ref) {
-  return LocalStorageServiceImpl();
+
+final localStorageServiceProvider = LocalStorageServiceImpl();
+
+
+
+class AppNotifier extends StateNotifier<AppState> {
+  final LocalStorageService _storage;
+
+  AppNotifier(this._storage) : super(AppState((b) => b
+      ..restaurants = ListBuilder<Restaurant>()
+      ..menuItems = ListBuilder<FoodItem>()
+      ..cartItems = ListBuilder<CartItem>()
+      ..orders = ListBuilder<Order>()
+      ..searchQuery = ''
+      ..isLoading = false)) {
+    _init();
+  }
+
+
+  Future<void> _init() async {
+    await _storage.init();
+    await _loadRestaurants();
+    await _loadCart();
+    await _loadOrders();
+  }
+
+  void _updateState({
+    List<Restaurant>? restaurants,
+    List<FoodItem>? menuItems,
+    List<CartItem>? cartItems,
+    List<Order>? orders,
+    String? searchQuery,
+    bool? isLoading,
+  }) {
+    state = state.rebuild((b) {
+      if (restaurants != null) b.restaurants = ListBuilder(restaurants);
+      if (menuItems != null) b.menuItems = ListBuilder(menuItems);
+      if (cartItems != null) b.cartItems = ListBuilder(cartItems);
+      if (orders != null) b.orders = ListBuilder(orders);
+      if (searchQuery != null) b.searchQuery = searchQuery;
+      if (isLoading != null) b.isLoading = isLoading;
+    });
+  }
+
+
+  Future<void> _loadRestaurants() async {
+    _updateState(isLoading: true);
+
+    final existing = await _storage.getRestaurants();
+
+    if (existing.isEmpty) {
+      await _storage.insertAllRestaurants(_sampleRestaurants);
+      await _storage.insertAllFoodItems(_sampleFoodItems);
+      _updateState(
+        restaurants: _sampleRestaurants,
+        isLoading: false,
+      );
+    } else {
+      _updateState(
+        restaurants: existing,
+        isLoading: false,
+      );
+    }
+  }
+
+
+  Future<void> loadMenuItems(int restaurantId) async {
+    final items = await _storage.getFoodItems(restaurantId);
+    _updateState(menuItems: items);
+  }
+
+
+  void updateSearch(String query) {
+    _updateState(searchQuery: query.toLowerCase());
+  }
+
+  // Filtered restaurants — search query based
+  List<Restaurant> get filteredRestaurants {
+    if (state.searchQuery.isEmpty) return state.restaurants.toList();
+    return state.restaurants.where((r) =>
+        r.name.toLowerCase().contains(state.searchQuery) ||
+        r.cuisine.toLowerCase().contains(state.searchQuery)).toList();
+  }
+
+
+
+  Future<void> _loadCart() async {
+    final items = await _storage.getCartItems();
+    _updateState(cartItems: items);
+  }
+
+  Future<void> addItem(FoodItem foodItem, Restaurant restaurant) async {
+    await _storage.addCartItem(CartItem((b) => b
+      ..id = 0
+      ..foodItemId = foodItem.id
+      ..foodItemName = foodItem.name
+      ..price = foodItem.price
+      ..imageUrl = foodItem.imageUrl
+      ..quantity = 1
+      ..restaurantId = restaurant.id
+      ..restaurantName = restaurant.name));
+    await _loadCart();
+  }
+
+  Future<void> increaseQuantity(CartItem item) async {
+    await _storage.updateCartItemQuantity(item.id, item.quantity + 1);
+    await _loadCart();
+  }
+
+  Future<void> decreaseQuantity(CartItem item) async {
+    if (item.quantity <= 1) {
+      await _storage.removeCartItem(item.id);
+    } else {
+      await _storage.updateCartItemQuantity(item.id, item.quantity - 1);
+    }
+    await _loadCart();
+  }
+
+  Future<void> removeItem(int cartItemId) async {
+    await _storage.removeCartItem(cartItemId);
+    await _loadCart();
+  }
+
+  Future<void> clearCart() async {
+    await _storage.clearCart();
+    _updateState(cartItems: []);
+  }
+
+
+
+  Future<void> _loadOrders() async {
+    final orders = await _storage.getOrders();
+    _updateState(orders: orders);
+  }
+
+  Future<void> placeOrder({
+    required List<CartItem> cartItems,
+    required String restaurantName,
+    required double totalAmount,
+    required String deliveryAddress,
+  }) async {
+    final order = Order((b) => b
+      ..id = 0
+      ..restaurantName = restaurantName
+      ..items = ListBuilder(cartItems)
+      ..totalAmount = totalAmount
+      ..status = 'placed'
+      ..placedAt = DateTime.now()
+      ..deliveryAddress = deliveryAddress);
+    await _storage.saveOrder(order);
+    await _loadOrders();
+  }
+}
+
+
+final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
+  return AppNotifier(localStorageServiceProvider);
 });
+
 
 
 final List<Restaurant> _sampleRestaurants = [
@@ -130,8 +283,6 @@ final List<Restaurant> _sampleRestaurants = [
 ];
 
 final List<FoodItem> _sampleFoodItems = [
-
-
   FoodItem((b) => b
     ..id = 101 ..restaurantId = 1
     ..name = 'Classic Cheeseburger'
@@ -181,7 +332,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 89.0
     ..imageUrl = 'https://images.unsplash.com/photo-1639024471283-03518883512d?w=300'
     ..category = 'Sides' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 201 ..restaurantId = 2
     ..name = 'Margherita Pizza'
@@ -224,8 +374,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 149.0
     ..imageUrl = 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=300'
     ..category = 'Desserts' ..isAvailable = true),
-
-  
   FoodItem((b) => b
     ..id = 301 ..restaurantId = 3
     ..name = 'Salmon Nigiri (8 pcs)'
@@ -268,8 +416,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 99.0
     ..imageUrl = 'https://images.unsplash.com/photo-1615361200141-f45040f367be?w=300'
     ..category = 'Starters' ..isAvailable = true),
-
-
   FoodItem((b) => b
     ..id = 401 ..restaurantId = 4
     ..name = 'Butter Chicken'
@@ -340,7 +486,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 119.0
     ..imageUrl = 'https://images.unsplash.com/photo-1624371414361-e670edf4a1ea?w=300'
     ..category = 'Desserts' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 601 ..restaurantId = 6
     ..name = 'Kung Pao Chicken'
@@ -376,7 +521,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 129.0
     ..imageUrl = 'https://images.unsplash.com/photo-1606525437560-98c4f83f7b30?w=300'
     ..category = 'Starters' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 701 ..restaurantId = 7
     ..name = 'Ribeye Steak'
@@ -405,7 +549,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 399.0
     ..imageUrl = 'https://images.unsplash.com/photo-1598103442097-8b74394b95c1?w=300'
     ..category = 'Grills' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 801 ..restaurantId = 8
     ..name = 'Spaghetti Carbonara'
@@ -441,7 +584,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 149.0
     ..imageUrl = 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=300'
     ..category = 'Desserts' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 901 ..restaurantId = 9
     ..name = 'Kerala Fish Curry'
@@ -477,7 +619,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 89.0
     ..imageUrl = 'https://images.unsplash.com/photo-1601303516534-bf4bc5687d3e?w=300'
     ..category = 'Desserts' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 1001 ..restaurantId = 10
     ..name = 'Chicken Shawarma'
@@ -506,7 +647,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 399.0
     ..imageUrl = 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300'
     ..category = 'Platters' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 1101 ..restaurantId = 11
     ..name = 'Pad Thai'
@@ -535,7 +675,6 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 149.0
     ..imageUrl = 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=300'
     ..category = 'Desserts' ..isAvailable = true),
-
   FoodItem((b) => b
     ..id = 1201 ..restaurantId = 12
     ..name = 'Chocolate Lava Cake'
@@ -572,135 +711,3 @@ final List<FoodItem> _sampleFoodItems = [
     ..imageUrl = 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=300'
     ..category = 'Drinks' ..isAvailable = true),
 ];
-
-
-// search query provider for searching the restauarnts name 
-//here ref means reference it acts like bridge between provider and the rest of app 
-//" "is a initial value 
-final searchQueryProvider = StateProvider<String>((ref) => '');
-final restaurantListProvider = FutureProvider<List<Restaurant>>((ref) async {
-  //here the storage watches the localStorageProvider so it can acces the locaalstorage services methods 
-  final storage = ref.watch(localStorageServiceProvider);
-  //initilaize teh db
-  await storage.init();
-//call the get restaurentrs methd
-  final existing = await storage.getRestaurants();
-
-  if (existing.isEmpty) {
-    
-    await storage.insertAllRestaurants(_sampleRestaurants);
-    await storage.insertAllFoodItems(_sampleFoodItems);
-    return _sampleRestaurants;
-  }
-
-  return existing;
-});
-
-
-//menuitems provider to get the menu items of the restaurant based on the restaurant id
-//.family is used to pass the restaurant id as a parameter to the provider to get  menu items of the restaurant 
-//based on the restaurant id
-final menuItemsProvider = FutureProvider.family<List<FoodItem>, int>((ref, restaurantId) async {
-  final storage = ref.watch(localStorageServiceProvider);
-  await storage.init();
-  return await storage.getFoodItems(restaurantId);
-});
-
-
-//
-final cartProvider = StateNotifierProvider<CartNotifier, List<CartItem>>((ref) {
-  final storage = ref.watch(localStorageServiceProvider);
-  return CartNotifier(storage);
-});
-
-class CartNotifier extends StateNotifier<List<CartItem>> {
-  final LocalStorageService _storage;
-
-  CartNotifier(this._storage) : super([]) {
-    _loadCart();
-  }
-
-  Future<void> _loadCart() async {
-    await _storage.init();
-    final items = await _storage.getCartItems();
-    state = items;
-  }
-
-  Future<void> addItem(FoodItem foodItem, Restaurant restaurant) async {
-    await _storage.addCartItem(CartItem((b) => b
-      ..id = 0
-      ..foodItemId = foodItem.id
-      ..foodItemName = foodItem.name
-      ..price = foodItem.price
-      ..imageUrl = foodItem.imageUrl
-      ..quantity = 1
-      ..restaurantId = restaurant.id
-      ..restaurantName = restaurant.name));
-    await _loadCart();
-  }
-
-  Future<void> increaseQuantity(CartItem item) async {
-    await _storage.updateCartItemQuantity(item.id, item.quantity + 1);
-    await _loadCart();
-  }
-
-  Future<void> decreaseQuantity(CartItem item) async {
-    if (item.quantity <= 1) {
-      await _storage.removeCartItem(item.id);
-    } else {
-      await _storage.updateCartItemQuantity(item.id, item.quantity - 1);
-    }
-    await _loadCart();
-  }
-
-  Future<void> removeItem(int cartItemId) async {
-    await _storage.removeCartItem(cartItemId);
-    await _loadCart();
-  }
-
-  Future<void> clearCart() async {
-    await _storage.clearCart();
-    state = [];
-  }
-
-  double get totalPrice => state.fold(0.0, (sum, item) => sum + item.totalPrice);
-  int get itemCount => state.fold(0, (sum, item) => sum + item.quantity);
-}
-
-
-final ordersProvider = StateNotifierProvider<OrdersNotifier, List<Order>>((ref) {
-  final storage = ref.watch(localStorageServiceProvider);
-  return OrdersNotifier(storage);
-});
-
-class OrdersNotifier extends StateNotifier<List<Order>> {
-  final LocalStorageService _storage;
-
-  OrdersNotifier(this._storage) : super([]) {
-    _loadOrders();
-  }
-
-  Future<void> _loadOrders() async {
-    await _storage.init();
-    final orders = await _storage.getOrders();
-    state = orders;
-  }
-
-  Future<void> placeOrder({
-    required List<CartItem> cartItems,
-    required String restaurantName,
-    required double totalAmount,
-    required String deliveryAddress,
-  }) async {
-    final order = Order((b) => b
-      ..id = 0
-      ..restaurantName = restaurantName
-      ..items = ListBuilder(cartItems)
-      ..totalAmount = totalAmount
-      ..status = 'placed'
-      ..placedAt = DateTime.now()
-      ..deliveryAddress = deliveryAddress);
-    await _storage.saveOrder(order);
-    await _loadOrders();
-  }
-}

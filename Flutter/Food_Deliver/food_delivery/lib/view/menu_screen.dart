@@ -6,51 +6,77 @@ import '../model/food_item.dart';
 import '../viewmodel/view_model.dart';
 import 'cart_screen.dart';
 
-class MenuScreen extends ConsumerWidget {
+class MenuScreen extends ConsumerStatefulWidget {
   final Restaurant restaurant;
   const MenuScreen({super.key, required this.restaurant});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final menuAsync = ref.watch(menuItemsProvider(restaurant.id));
-    final cartNotifier = ref.read(cartProvider.notifier);
-    final totalCount = cartNotifier.itemCount;
+  ConsumerState<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends ConsumerState<MenuScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() =>
+        ref.read(appProvider.notifier).loadMenuItems(widget.restaurant.id));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = ref.watch(appProvider);
+    final appNotifier = ref.read(appProvider.notifier);
+    final menuItems = appState.menuItems;
+
+    // Category-wise group பண்றோம்
+    final Map<String, List<FoodItem>> grouped = {};
+    for (final item in menuItems) {
+      grouped.putIfAbsent(item.category, () => []).add(item);
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: CustomScrollView(
         slivers: [
+
+          // ── AppBar with restaurant image ──────────────────
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
             backgroundColor: const Color(0xFFFF6B35),
             foregroundColor: Colors.white,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(restaurant.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
-              background: Image.network(restaurant.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: const Color(0xFFFF6B35))),
+              title: Text(widget.restaurant.name,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(color: Colors.black54, blurRadius: 4)
+                      ])),
+              background: Image.network(
+                widget.restaurant.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Container(color: const Color(0xFFFF6B35)),
+              ),
             ),
             actions: [
               Stack(children: [
                 IconButton(
                   icon: const Icon(Icons.shopping_cart_outlined),
-                  onPressed: totalCount > 0
-                      ? () => Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => const CartScreen()))
-                      : null,
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CartScreen()),
+                  ),
                 ),
-                if (totalCount > 0)
+                if (appState.itemCount > 0)
                   Positioned(
-                    right: 6, top: 6,
+                    right: 6,
+                    top: 6,
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
                           color: Colors.white, shape: BoxShape.circle),
-                      child: Text('$totalCount',
+                      child: Text('${appState.itemCount}',
                           style: const TextStyle(
                               color: Color(0xFFFF6B35),
                               fontSize: 10,
@@ -61,7 +87,7 @@ class MenuScreen extends ConsumerWidget {
             ],
           ),
 
-          // Restaurant info row in the restaurant details page that shows the rating, delivery time and delivery fee of the restaurant.
+          // ── Restaurant Info Row ───────────────────────────
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.all(16),
@@ -72,67 +98,75 @@ class MenuScreen extends ConsumerWidget {
               child: Row(children: [
                 const Icon(Icons.star, color: Color(0xFFFFB300), size: 18),
                 const SizedBox(width: 6),
-                Text('${restaurant.rating}',
+                Text('${widget.restaurant.rating}',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(width: 16),
                 const Icon(Icons.access_time, color: Colors.grey, size: 18),
                 const SizedBox(width: 6),
-                Text(restaurant.deliveryTime),
+                Text(widget.restaurant.deliveryTime),
                 const SizedBox(width: 16),
-                const Icon(Icons.delivery_dining, color: Colors.grey, size: 18),
+                const Icon(Icons.delivery_dining,
+                    color: Colors.grey, size: 18),
                 const SizedBox(width: 6),
-                Text('₹${restaurant.deliveryFee.toStringAsFixed(0)}'),
+                Text(widget.restaurant.deliveryFee == 0
+                    ? 'Free'
+                    : '₹${widget.restaurant.deliveryFee.toStringAsFixed(0)}'),
               ]),
             ),
           ),
 
-          // Menu items
-          menuAsync.when(
-            loading: () => const SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(40),
-                  child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
-                ),
-              ),
-            ),
-            error: (e, s) => SliverToBoxAdapter(
-                child: Center(child: Text('Error: $e'))),
-            data: (menuItems) {
-              final Map<String, List<FoodItem>> grouped = {};
-              for (final item in menuItems) {
-                grouped.putIfAbsent(item.category, () => []).add(item);
-              }
-              return SliverList(
-                //delegate is used to build the list of menu items in the restaurant details page. it takes a list of widgets and builds them  as they scroll into view.
-                delegate: SliverChildListDelegate([
-                  ...grouped.entries.expand((entry) => [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(entry.key,
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
+          // ── Menu Items ────────────────────────────────────
+          menuItems.isEmpty
+              ? const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(
+                          color: Color(0xFFFF6B35)),
                     ),
-                    ...entry.value.map((item) => _MenuItemCard(
-                      item: item,
-                      onAdd: () async {
-                        await cartNotifier.addItem(item, restaurant);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('${item.name} added to cart'),
-                          duration: const Duration(seconds: 1),
-                          backgroundColor: const Color(0xFFFF6B35),
-                        ));
-                      },
-                    )),
+                  ),
+                )
+              : SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Category-wise list
+                    ...grouped.entries.expand((entry) => [
+                          // Category header
+                          Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Text(entry.key,
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                          // Items under category
+                          ...entry.value.map((item) => _MenuItemCard(
+                                item: item,
+                                onAdd: () async {
+                                  await appNotifier.addItem(
+                                      item, widget.restaurant);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(
+                                          '${item.name} added to cart'),
+                                      duration:
+                                          const Duration(seconds: 1),
+                                      backgroundColor:
+                                          const Color(0xFFFF6B35),
+                                    ));
+                                  }
+                                },
+                              )),
+                        ]),
+                    const SizedBox(height: 100),
                   ]),
-                  const SizedBox(height: 100),
-                ]),
-              );
-            },
-          ),
+                ),
         ],
       ),
-      bottomNavigationBar: totalCount > 0
+
+      // ── View Cart Bottom Bar ──────────────────────────────
+      bottomNavigationBar: appState.itemCount > 0
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -144,10 +178,13 @@ class MenuScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const CartScreen())),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CartScreen()),
+                  ),
                   child: Text(
-                    'View Cart ($totalCount items) • ₹${cartNotifier.totalPrice.toStringAsFixed(0)}',
+                    'View Cart (${appState.itemCount} items) • ₹${appState.totalPrice.toStringAsFixed(0)}',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
@@ -158,6 +195,8 @@ class MenuScreen extends ConsumerWidget {
     );
   }
 }
+
+// ── Menu Item Card ────────────────────────────────────────────
 
 class _MenuItemCard extends StatelessWidget {
   final FoodItem item;
@@ -173,18 +212,25 @@ class _MenuItemCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05),
-              blurRadius: 8, offset: const Offset(0, 2))
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
         ],
       ),
       child: Row(children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: Image.network(item.imageUrl,
-              width: 90, height: 90, fit: BoxFit.cover,
+              width: 90,
+              height: 90,
+              fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                  width: 90, height: 90, color: Colors.grey[100],
-                  child: const Icon(Icons.fastfood, color: Colors.grey))),
+                  width: 90,
+                  height: 90,
+                  color: Colors.grey[100],
+                  child:
+                      const Icon(Icons.fastfood, color: Colors.grey))),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -196,8 +242,10 @@ class _MenuItemCard extends StatelessWidget {
                       fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 4),
               Text(item.description,
-                  maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(color: Colors.grey[600], fontSize: 12)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

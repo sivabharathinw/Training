@@ -12,45 +12,35 @@ class RestaurantListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final restaurantsAsync = ref.watch(restaurantListProvider);
-
-    //it watches the cartProvider and rebuilds whenever the cart items change,
-    // allowing the app bar to update the cart count in real-time as users add or remove items from their cart.
-    final cartItems = ref.watch(cartProvider);
-    final cartNotifier = ref.read(cartProvider.notifier);
-    //fold is  a method on a list used to reduce the list to single value 
-    //it combines the initial value, previous value and the curr item =>to caluculate total
-
-    final totalCount = cartItems.fold(0, (sum, item) => sum + item.quantity);
-
-    // search query state to filter the restaurant list based on user input in the search bar. 
-    //As the user types, the searchQueryProvider updates, causing the restaurant list to rebuild and 
-    //display only those restaurants that match the search criteria.
-    final searchQuery = ref.watch(searchQueryProvider);
+    final appState = ref.watch(appProvider);
+    final appNotifier = ref.read(appProvider.notifier);
+    final totalCount = appState.itemCount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFF6B35),
-        foregroundColor: Colors.white,//foregroundColor sets the color of text and icons in the app bar to white
+        foregroundColor: Colors.white,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('FoodRush',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 20)),
             Text('Delivering to: Home',
-                style: TextStyle(fontSize: 12, color: Colors.white70)),//colors.white70=> means 70% opacity
-                
+                style:
+                    TextStyle(fontSize: 12, color: Colors.white70)),
           ],
         ),
-        //actions are  right end of appbar
         actions: [
           Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const CartScreen())),
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CartScreen())),
               ),
               if (totalCount > 0)
                 Positioned(
@@ -59,10 +49,11 @@ class RestaurantListScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
-                        color: Colors.white, shape: BoxShape.circle),
+                        color: Colors.white,
+                        shape: BoxShape.circle),
                     child: Text('$totalCount',
                         style: const TextStyle(
-                            color: Color(0xFFFF6B35),//)0x represents hexadecimal number and ff represnets opacity then rbg
+                            color: Color(0xFFFF6B35),
                             fontSize: 10,
                             fontWeight: FontWeight.bold)),
                   ),
@@ -71,28 +62,27 @@ class RestaurantListScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const OrdersScreen())),
+            onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const OrdersScreen())),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Search Bar
+
           Container(
             color: const Color(0xFFFF6B35),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             child: TextField(
-//onchanged is a callback that gets triggered whenever the text in the TextField changes.
-// that takes the current value as a paramater
-//.notifier allows to update the state of the provider
               onChanged: (value) {
-                ref.read(searchQueryProvider.notifier).state =
-                    value.toLowerCase();
+                appNotifier.updateSearch(value);
               },
               decoration: InputDecoration(
-                hintText: 'Search restaurants or food...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                hintText: 'Search restaurants or cuisine...',
+                prefixIcon:
+                    const Icon(Icons.search, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: EdgeInsets.zero,
@@ -104,62 +94,53 @@ class RestaurantListScreen extends ConsumerWidget {
             ),
           ),
 
-          // Restaurant List
+      
           Expanded(
-            child: restaurantsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
-              ),
-              error: (e, s) =>
-                  Center(child: Text('Something went wrong: $e')),
-              data: (restaurants) {
+            child: appState.isLoading
 
-                // Search filter
-                final filtered = searchQuery.isEmpty
-                    ? restaurants
-                    : restaurants.where((r) {
-                  return r.name
-                      .toLowerCase()
-                      .contains(searchQuery) ||
-                      r.cuisine
-                          .toLowerCase()
-                          .contains(searchQuery);
-                }).toList();
+                // Loading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        color: Color(0xFFFF6B35)),
+                  )
 
-                // No results found
-                if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off,
-                            size: 60, color: Colors.grey[300]),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No restaurants found\nfor "$searchQuery"',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: Colors.grey[500], fontSize: 16),
+                // No results
+                : appNotifier.filteredRestaurants.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.search_off,
+                                size: 60, color: Colors.grey[300]),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No restaurants found\nfor "${appState.searchQuery}"',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 16),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }
+                      )
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) =>
-                      _RestaurantCard(restaurant: filtered[i]),
-                );
-              },
-            ),
+                    // Restaurant cards
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount:
+                            appNotifier.filteredRestaurants.length,
+                        itemBuilder: (ctx, i) => _RestaurantCard(
+                            restaurant:
+                                appNotifier.filteredRestaurants[i]),
+                      ),
           ),
         ],
       ),
     );
   }
 }
+
+
 
 class _RestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
@@ -169,9 +150,11 @@ class _RestaurantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: restaurant.isOpen
-          ? () => Navigator.push(context,
-          MaterialPageRoute(
-              builder: (_) => MenuScreen(restaurant: restaurant)))
+          ? () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      MenuScreen(restaurant: restaurant)))
           : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -188,13 +171,13 @@ class _RestaurantCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //stack allows to place the closed text on top of the image when the restaurant is closed
+
+            // Restaurant image + CLOSED overlay
             Stack(
               children: [
-                //clipRRect is used to  crop or clip the image into a rounded rectangle shape, giving it rounded corners.
                 ClipRRect(
-                  borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16)),
                   child: Image.network(
                     restaurant.imageUrl,
                     height: 160,
@@ -226,20 +209,25 @@ class _RestaurantCard extends StatelessWidget {
                   ),
               ],
             ),
+
+            // Restaurant info
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
                     children: [
                       Text(restaurant.name,
                           style: const TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold)),
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold)),
                       Row(children: [
                         const Icon(Icons.star,
-                            size: 16, color: Color(0xFFFFB300)),
+                            size: 16,
+                            color: Color(0xFFFFB300)),
                         const SizedBox(width: 3),
                         Text(restaurant.rating.toString(),
                             style: const TextStyle(
@@ -249,11 +237,10 @@ class _RestaurantCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(restaurant.cuisine,
-                      style:
-                      TextStyle(color: Colors.grey[600], fontSize: 13)),
+                      style: TextStyle(
+                          color: Colors.grey[600], fontSize: 13)),
                   const SizedBox(height: 8),
                   Row(children: [
-                    //infochip =>shows the delivery time and delivery fee of the restaurant in a compact format with an icon and label.
                     _InfoChip(
                         icon: Icons.access_time,
                         label: restaurant.deliveryTime),
@@ -285,7 +272,9 @@ class _InfoChip extends StatelessWidget {
     return Row(children: [
       Icon(icon, size: 14, color: Colors.grey[500]),
       const SizedBox(width: 4),
-      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      Text(label,
+          style:
+              TextStyle(fontSize: 12, color: Colors.grey[600])),
     ]);
   }
 }
