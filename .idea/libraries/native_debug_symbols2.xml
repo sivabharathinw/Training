@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="native-debug-symbols2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Flutter/myflutterapp/build/app/outputs/native-debug-symbols/release/native-debug-symbols.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
