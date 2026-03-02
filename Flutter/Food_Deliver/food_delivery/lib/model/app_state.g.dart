@@ -17,8 +17,6 @@ class _$AppState extends AppState {
   final BuiltList<Order> orders;
   @override
   final String searchQuery;
-  @override
-  final bool isLoading;
 
   factory _$AppState([void Function(AppStateBuilder)? updates]) =>
       (AppStateBuilder()..update(updates))._build();
@@ -28,8 +26,7 @@ class _$AppState extends AppState {
       required this.menuItems,
       required this.cartItems,
       required this.orders,
-      required this.searchQuery,
-      required this.isLoading})
+      required this.searchQuery})
       : super._();
   @override
   AppState rebuild(void Function(AppStateBuilder) updates) =>
@@ -46,8 +43,7 @@ class _$AppState extends AppState {
         menuItems == other.menuItems &&
         cartItems == other.cartItems &&
         orders == other.orders &&
-        searchQuery == other.searchQuery &&
-        isLoading == other.isLoading;
+        searchQuery == other.searchQuery;
   }
 
   @override
@@ -58,7 +54,6 @@ class _$AppState extends AppState {
     _$hash = $jc(_$hash, cartItems.hashCode);
     _$hash = $jc(_$hash, orders.hashCode);
     _$hash = $jc(_$hash, searchQuery.hashCode);
-    _$hash = $jc(_$hash, isLoading.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -70,8 +65,7 @@ class _$AppState extends AppState {
           ..add('menuItems', menuItems)
           ..add('cartItems', cartItems)
           ..add('orders', orders)
-          ..add('searchQuery', searchQuery)
-          ..add('isLoading', isLoading))
+          ..add('searchQuery', searchQuery))
         .toString();
   }
 }
@@ -105,10 +99,6 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
   String? get searchQuery => _$this._searchQuery;
   set searchQuery(String? searchQuery) => _$this._searchQuery = searchQuery;
 
-  bool? _isLoading;
-  bool? get isLoading => _$this._isLoading;
-  set isLoading(bool? isLoading) => _$this._isLoading = isLoading;
-
   AppStateBuilder();
 
   AppStateBuilder get _$this {
@@ -119,7 +109,6 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
       _cartItems = $v.cartItems.toBuilder();
       _orders = $v.orders.toBuilder();
       _searchQuery = $v.searchQuery;
-      _isLoading = $v.isLoading;
       _$v = null;
     }
     return this;
@@ -149,8 +138,6 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
             orders: orders.build(),
             searchQuery: BuiltValueNullFieldError.checkNotNull(
                 searchQuery, r'AppState', 'searchQuery'),
-            isLoading: BuiltValueNullFieldError.checkNotNull(
-                isLoading, r'AppState', 'isLoading'),
           );
     } catch (_) {
       late String _$failedField;

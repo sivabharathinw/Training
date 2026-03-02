@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../extensions/ref_extensions.dart';
 
 import '../model/restaurant.dart';
 import '../viewmodel/view_model.dart';
@@ -12,8 +13,8 @@ class RestaurantListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appState = ref.watch(appProvider);
-    final appNotifier = ref.read(appProvider.notifier);
+    final appState = ref.appState;
+final appNotifier = ref.appNotifier;
     final totalCount = appState.itemCount;
 
     return Scaffold(
@@ -25,11 +26,9 @@ class RestaurantListScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('FoodRush',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 20)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
             Text('Delivering to: Home',
-                style:
-                    TextStyle(fontSize: 12, color: Colors.white70)),
+                style: TextStyle(fontSize: 12, color: Colors.white70)),
           ],
         ),
         actions: [
@@ -37,10 +36,8 @@ class RestaurantListScreen extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CartScreen())),
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const CartScreen())),
               ),
               if (totalCount > 0)
                 Positioned(
@@ -49,8 +46,7 @@ class RestaurantListScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle),
+                        color: Colors.white, shape: BoxShape.circle),
                     child: Text('$totalCount',
                         style: const TextStyle(
                             color: Color(0xFFFF6B35),
@@ -62,27 +58,21 @@ class RestaurantListScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const OrdersScreen())),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const OrdersScreen())),
           ),
         ],
       ),
       body: Column(
         children: [
-
           Container(
             color: const Color(0xFFFF6B35),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             child: TextField(
-              onChanged: (value) {
-                appNotifier.updateSearch(value);
-              },
+              onChanged: (value) => appNotifier.updateSearch(value),
               decoration: InputDecoration(
                 hintText: 'Search restaurants or cuisine...',
-                prefixIcon:
-                    const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: EdgeInsets.zero,
@@ -93,18 +83,12 @@ class RestaurantListScreen extends ConsumerWidget {
               ),
             ),
           ),
-
-      
           Expanded(
-            child: appState.isLoading
-
-                // Loading
+            child: appState.restaurants.isEmpty
                 ? const Center(
                     child: CircularProgressIndicator(
                         color: Color(0xFFFF6B35)),
                   )
-
-                // No results
                 : appNotifier.filteredRestaurants.isEmpty
                     ? Center(
                         child: Column(
@@ -117,21 +101,16 @@ class RestaurantListScreen extends ConsumerWidget {
                               'No restaurants found\nfor "${appState.searchQuery}"',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 16),
+                                  color: Colors.grey[500], fontSize: 16),
                             ),
                           ],
                         ),
                       )
-
-                    // Restaurant cards
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount:
-                            appNotifier.filteredRestaurants.length,
+                        itemCount: appNotifier.filteredRestaurants.length,
                         itemBuilder: (ctx, i) => _RestaurantCard(
-                            restaurant:
-                                appNotifier.filteredRestaurants[i]),
+                            restaurant: appNotifier.filteredRestaurants[i]),
                       ),
           ),
         ],
@@ -139,6 +118,8 @@ class RestaurantListScreen extends ConsumerWidget {
     );
   }
 }
+
+
 
 
 
@@ -172,7 +153,7 @@ class _RestaurantCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // Restaurant image + CLOSED overlay
+            // Restaurant image + closed overlap due to stack
             Stack(
               children: [
                 ClipRRect(

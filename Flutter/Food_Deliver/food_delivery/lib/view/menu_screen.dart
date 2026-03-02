@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../extensions/ref_extensions.dart';
 import '../model/restaurant.dart';
 import '../model/food_item.dart';
 import '../viewmodel/view_model.dart';
@@ -19,16 +19,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   void initState() {
     super.initState();
     Future.microtask(() =>
-        ref.read(appProvider.notifier).loadMenuItems(widget.restaurant.id));
+        ref.appNotifier.loadMenuItems(widget.restaurant.id));
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = ref.watch(appProvider);
-    final appNotifier = ref.read(appProvider.notifier);
+    final appState = ref.appState;
+final appNotifier = ref.appNotifier;
     final menuItems = appState.menuItems;
 
-    // Category-wise group பண்றோம்
+    
     final Map<String, List<FoodItem>> grouped = {};
     for (final item in menuItems) {
       grouped.putIfAbsent(item.category, () => []).add(item);
@@ -39,7 +39,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       body: CustomScrollView(
         slivers: [
 
-          // ── AppBar with restaurant image ──────────────────
+    
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
@@ -87,7 +87,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             ],
           ),
 
-          // ── Restaurant Info Row ───────────────────────────
+          //
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.all(16),
@@ -115,7 +115,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             ),
           ),
 
-          // ── Menu Items ────────────────────────────────────
+          
           menuItems.isEmpty
               ? const SliverToBoxAdapter(
                   child: Center(
@@ -165,7 +165,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         ],
       ),
 
-      // ── View Cart Bottom Bar ──────────────────────────────
+      
       bottomNavigationBar: appState.itemCount > 0
           ? SafeArea(
               child: Padding(
@@ -196,7 +196,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   }
 }
 
-// ── Menu Item Card ────────────────────────────────────────────
+
 
 class _MenuItemCard extends StatelessWidget {
   final FoodItem item;

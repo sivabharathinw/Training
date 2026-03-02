@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../viewmodel/view_model.dart';
+import '../extensions/ref_extensions.dart';
 
 class OrdersScreen extends ConsumerWidget {
   const OrdersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final orders = ref.watch(appProvider).orders;
+    final appState = ref.appState;
+    final orders = appState.orders;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -57,10 +57,8 @@ class OrdersScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Restaurant name + status badge
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(order.restaurantName,
                                 style: const TextStyle(
@@ -70,8 +68,7 @@ class OrdersScreen extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFFFF6B35).withOpacity(0.1),
+                                color: const Color(0xFFFF6B35).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(order.status.toUpperCase(),
@@ -82,21 +79,15 @@ class OrdersScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 10),
                         const Divider(height: 1),
                         const SizedBox(height: 10),
-
-                 
                         ...order.items.map((item) => Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 4),
+                              padding: const EdgeInsets.only(bottom: 4),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                      '${item.quantity}x ${item.foodItemName}',
+                                  Text('${item.quantity}x ${item.foodItemName}',
                                       style: TextStyle(
                                           color: Colors.grey[700],
                                           fontSize: 13)),
@@ -108,15 +99,11 @@ class OrdersScreen extends ConsumerWidget {
                                 ],
                               ),
                             )),
-
                         const SizedBox(height: 10),
                         const Divider(height: 1),
                         const SizedBox(height: 10),
-
-                
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               '${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}  ${order.placedAt.hour}:${order.placedAt.minute.toString().padLeft(2, '0')}',

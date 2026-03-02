@@ -17,7 +17,6 @@ abstract class AppState implements Built<AppState, AppStateBuilder> {
   BuiltList<CartItem> get cartItems;
   BuiltList<Order> get orders;
   String get searchQuery;
-  bool get isLoading;
 
   double get totalPrice =>
       cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);

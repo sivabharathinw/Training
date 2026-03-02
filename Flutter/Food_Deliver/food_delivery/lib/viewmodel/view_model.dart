@@ -1,36 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:built_collection/built_collection.dart';
+import 'package:food_delivery/repository/app_repository.dart';
 
-import '../core/services/local_storage_service.dart';
-import '../services/local_storage_service_impl.dart';
 import '../model/restaurant.dart';
 import '../model/food_item.dart';
 import '../model/cart_item.dart';
 import '../model/order.dart';
 import '../model/app_state.dart';
 
-
-
-final localStorageServiceProvider = LocalStorageServiceImpl();
-
-
+final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
+  final repo = AppRepository();
+  return AppNotifier(repo);
+});
 
 class AppNotifier extends StateNotifier<AppState> {
-  final LocalStorageService _storage;
+  final AppRepository repository;
 
-  AppNotifier(this._storage) : super(AppState((b) => b
+  get _storage => repository.localStorageServiceProvider;
+
+  AppNotifier(this.repository) : super(AppState((b) => b
       ..restaurants = ListBuilder<Restaurant>()
       ..menuItems = ListBuilder<FoodItem>()
       ..cartItems = ListBuilder<CartItem>()
       ..orders = ListBuilder<Order>()
-      ..searchQuery = ''
-      ..isLoading = false)) {
+      ..searchQuery = '')) {
     _init();
   }
 
-
   Future<void> _init() async {
-    await _storage.init();
+    await repository.init();
     await _loadRestaurants();
     await _loadCart();
     await _loadOrders();
@@ -42,7 +40,6 @@ class AppNotifier extends StateNotifier<AppState> {
     List<CartItem>? cartItems,
     List<Order>? orders,
     String? searchQuery,
-    bool? isLoading,
   }) {
     state = state.rebuild((b) {
       if (restaurants != null) b.restaurants = ListBuilder(restaurants);
@@ -50,51 +47,36 @@ class AppNotifier extends StateNotifier<AppState> {
       if (cartItems != null) b.cartItems = ListBuilder(cartItems);
       if (orders != null) b.orders = ListBuilder(orders);
       if (searchQuery != null) b.searchQuery = searchQuery;
-      if (isLoading != null) b.isLoading = isLoading;
     });
   }
 
-
   Future<void> _loadRestaurants() async {
-    _updateState(isLoading: true);
-
     final existing = await _storage.getRestaurants();
 
     if (existing.isEmpty) {
       await _storage.insertAllRestaurants(_sampleRestaurants);
       await _storage.insertAllFoodItems(_sampleFoodItems);
-      _updateState(
-        restaurants: _sampleRestaurants,
-        isLoading: false,
-      );
+      _updateState(restaurants: _sampleRestaurants);
     } else {
-      _updateState(
-        restaurants: existing,
-        isLoading: false,
-      );
+      _updateState(restaurants: existing);
     }
   }
-
 
   Future<void> loadMenuItems(int restaurantId) async {
     final items = await _storage.getFoodItems(restaurantId);
     _updateState(menuItems: items);
   }
 
-
   void updateSearch(String query) {
     _updateState(searchQuery: query.toLowerCase());
   }
 
-  // Filtered restaurants — search query based
   List<Restaurant> get filteredRestaurants {
     if (state.searchQuery.isEmpty) return state.restaurants.toList();
     return state.restaurants.where((r) =>
         r.name.toLowerCase().contains(state.searchQuery) ||
         r.cuisine.toLowerCase().contains(state.searchQuery)).toList();
   }
-
-
 
   Future<void> _loadCart() async {
     final items = await _storage.getCartItems();
@@ -138,8 +120,6 @@ class AppNotifier extends StateNotifier<AppState> {
     _updateState(cartItems: []);
   }
 
-
-
   Future<void> _loadOrders() async {
     final orders = await _storage.getOrders();
     _updateState(orders: orders);
@@ -164,10 +144,6 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 }
 
-
-final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
-  return AppNotifier(localStorageServiceProvider);
-});
 
 
 

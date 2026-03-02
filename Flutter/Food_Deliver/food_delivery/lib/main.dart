@@ -1,8 +1,10 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:food_delivery/repository/app_repository.dart';
 
 import 'view/restaurant_list_screen.dart';
+
 
 void main() {
   runApp(

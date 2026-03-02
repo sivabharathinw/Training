@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../extensions/ref_extensions.dart';
 import '../viewmodel/view_model.dart';
 import 'orders_screen.dart';
 
@@ -9,8 +9,8 @@ class CartScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appState = ref.watch(appProvider);
-    final appNotifier = ref.read(appProvider.notifier);
+final appState = ref.appState;
+final appNotifier = ref.appNotifier;
     final cartItems = appState.cartItems;
     final deliveryFee = 19.0;
 
@@ -192,7 +192,7 @@ class CartScreen extends ConsumerWidget {
                                 appState.totalPrice + deliveryFee;
 
                             await appNotifier.placeOrder(
-                              cartItems: cartItems,
+                              cartItems: cartItems.toList(),
                               restaurantName: restaurantName,
                               totalAmount: total,
                               deliveryAddress: 'Home',
