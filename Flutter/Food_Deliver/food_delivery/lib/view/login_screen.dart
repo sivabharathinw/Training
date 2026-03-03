@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void login() async {
     setState(() => loading = true);
-
+//here it calls login method in authservice it returns null when no error
     final error = await _auth.login(
       emailController.text.trim(),
       passwordController.text.trim(),
