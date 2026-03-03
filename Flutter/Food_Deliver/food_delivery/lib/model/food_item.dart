@@ -1,4 +1,4 @@
-// lib/model/food_item.dart
+
 library food_item;
 
 import 'package:built_value/built_value.dart';
