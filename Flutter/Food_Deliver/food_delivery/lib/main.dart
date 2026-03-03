@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'view/login_screen.dart';
 import 'firebase_options.dart';
-import 'view/restaurant_list_screen.dart';
-
+import '../view/go_routes/routes.dart';
+import 'package:go_router/go_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -26,7 +25,7 @@ class FoodRushApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'FoodRush',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -35,7 +34,7 @@ class FoodRushApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: LoginScreen(),
+      routerConfig: appRouter, // gorouter instance
     );
   }
 }

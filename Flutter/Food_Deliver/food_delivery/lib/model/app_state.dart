@@ -1,4 +1,4 @@
-// lib/model/app_state.dart
+
 library app_state;
 
 import 'package:built_value/built_value.dart';

@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../extensions/ref_extensions.dart';
-
+import 'package:go_router/go_router.dart';
 import '../model/restaurant.dart';
 import '../viewmodel/view_model.dart';
 import 'menu_screen.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
-
 class RestaurantListScreen extends ConsumerWidget {
   const RestaurantListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appState = ref.appState;
-final appNotifier = ref.appNotifier;
+    final appNotifier = ref.appNotifier;
     final totalCount = appState.itemCount;
 
     return Scaffold(
@@ -36,8 +35,7 @@ final appNotifier = ref.appNotifier;
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const CartScreen())),
+                onPressed: () => GoRouter.of(context).go('/cart'), // <-- updated
               ),
               if (totalCount > 0)
                 Positioned(
@@ -58,8 +56,7 @@ final appNotifier = ref.appNotifier;
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const OrdersScreen())),
+            onPressed: () => GoRouter.of(context).go('/orders'), // <-- updated
           ),
         ],
       ),
@@ -86,42 +83,38 @@ final appNotifier = ref.appNotifier;
           Expanded(
             child: appState.restaurants.isEmpty
                 ? const Center(
-                    child: CircularProgressIndicator(
-                        color: Color(0xFFFF6B35)),
-                  )
+              child: CircularProgressIndicator(
+                  color: Color(0xFFFF6B35)),
+            )
                 : appNotifier.filteredRestaurants.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.search_off,
-                                size: 60, color: Colors.grey[300]),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No restaurants found\nfor "${appState.searchQuery}"',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.grey[500], fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: appNotifier.filteredRestaurants.length,
-                        itemBuilder: (ctx, i) => _RestaurantCard(
-                            restaurant: appNotifier.filteredRestaurants[i]),
-                      ),
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off,
+                      size: 60, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No restaurants found\nfor "${appState.searchQuery}"',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.grey[500], fontSize: 16),
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: appNotifier.filteredRestaurants.length,
+              itemBuilder: (ctx, i) => _RestaurantCard(
+                  restaurant: appNotifier.filteredRestaurants[i]),
+            ),
           ),
         ],
       ),
     );
   }
 }
-
-
-
-
 
 class _RestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
@@ -131,11 +124,7 @@ class _RestaurantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: restaurant.isOpen
-          ? () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      MenuScreen(restaurant: restaurant)))
+          ? () => GoRouter.of(context).go('/menu', extra: restaurant)//here pass the rest as a extra params
           : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -152,13 +141,12 @@ class _RestaurantCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            // Restaurant image + closed overlap due to stack
+            // Restaurant image + closed overlay
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16)),
+                  borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Image.network(
                     restaurant.imageUrl,
                     height: 160,
@@ -198,33 +186,28 @@ class _RestaurantCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(restaurant.name,
                           style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold)),
+                              fontSize: 17, fontWeight: FontWeight.bold)),
                       Row(children: [
                         const Icon(Icons.star,
-                            size: 16,
-                            color: Color(0xFFFFB300)),
+                            size: 16, color: Color(0xFFFFB300)),
                         const SizedBox(width: 3),
                         Text(restaurant.rating.toString(),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600)),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.w600)),
                       ]),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(restaurant.cuisine,
-                      style: TextStyle(
-                          color: Colors.grey[600], fontSize: 13)),
+                      style:
+                      TextStyle(color: Colors.grey[600], fontSize: 13)),
                   const SizedBox(height: 8),
                   Row(children: [
-                    _InfoChip(
-                        icon: Icons.access_time,
-                        label: restaurant.deliveryTime),
+                    _InfoChip(icon: Icons.access_time, label: restaurant.deliveryTime),
                     const SizedBox(width: 10),
                     _InfoChip(
                       icon: Icons.delivery_dining,
@@ -253,9 +236,7 @@ class _InfoChip extends StatelessWidget {
     return Row(children: [
       Icon(icon, size: 14, color: Colors.grey[500]),
       const SizedBox(width: 4),
-      Text(label,
-          style:
-              TextStyle(fontSize: 12, color: Colors.grey[600])),
+      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
     ]);
   }
 }

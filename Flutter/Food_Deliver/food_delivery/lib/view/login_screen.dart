@@ -1,38 +1,55 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import '../repository/app_repository.dart';
 import 'signup_screen.dart';
 import 'restaurant_list_screen.dart';
-
-
+import '../view/widgets/custom_text_field.dart';
+import 'package:go_router/go_router.dart';
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final AuthService _auth = AuthService();
+  bool isLoading = false;
+  final AppRepository _repository = AppRepository();
 
-  bool loading = false;
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
-  void login() async {
-    setState(() => loading = true);
-//here it calls login method in authservice it returns null when no error
-    final error = await _auth.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-    );
+  Future<void> login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
 
-    setState(() => loading = false);
+    if (email.isEmpty || password.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill all fields')),
+        );
+      }
+      return;
+    }
 
-    if (error != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+    setState(() => isLoading = true);
+
+    final error = await _repository.auth.login(email, password);
+
+    setState(() => isLoading = false);
+
+    if (!mounted) return;
+
+    if (error == null) {
+      GoRouter.of(context).go('/restaurants');
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => RestaurantListScreen ()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
       );
     }
   }
@@ -40,54 +57,71 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.all(24),
+      appBar: AppBar(title: const Text('Login')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "Login",
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            const SizedBox(height: 50),
+            const Text(
+              'FoodRush',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFFF6B35),
+              ),
             ),
-            SizedBox(height: 30),
-
-            TextField(
+            const SizedBox(height: 50),
+            CustomTextField(
               controller: emailController,
-              decoration: InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
-              ),
+              label: 'Email',
+              enabled: !isLoading,
             ),
-            SizedBox(height: 15),
-
-            TextField(
+            const SizedBox(height: 16),
+            CustomTextField(
               controller: passwordController,
+              label: 'Password',
               obscureText: true,
-              decoration: InputDecoration(
-                labelText: "Password",
-                border: OutlineInputBorder(),
-              ),
+              enabled: !isLoading,
             ),
-            SizedBox(height: 20),
-
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: loading ? null : login,
-                child: loading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text("Login"),
+                onPressed: isLoading ? null : login,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Login'),
               ),
             ),
-
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SignupScreen()),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: isLoading
+                  ? null
+                  : () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SignupScreen()),
                 );
               },
-              child: Text("Don't have account? Sign Up"),
+              child: RichText(
+                text: TextSpan(
+                  text: "Don't have an account? ",
+                  style: const TextStyle(color: Colors.black),
+                  children: [
+                    TextSpan(
+                      text: 'Sign up',
+                      style: const TextStyle(
+                        color: Color(0xFFFF6B35),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

@@ -5,7 +5,6 @@ import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
 part 'cart_item.g.dart';
-
 abstract class CartItem implements Built<CartItem, CartItemBuilder> {
   int get id;
   int get foodItemId;

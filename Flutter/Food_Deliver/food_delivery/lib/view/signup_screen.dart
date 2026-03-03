@@ -1,36 +1,66 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import 'home_screen.dart';
-
+import '../repository/app_repository.dart';
+import 'restaurant_list_screen.dart';
+import '../view/widgets/custom_text_field.dart';
+import 'package:go_router/go_router.dart';
 class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
   @override
-  _SignupScreenState createState() => _SignupScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final AuthService _auth = AuthService();
+  final confirmPasswordController = TextEditingController();
+  bool isLoading = false;
+  final AppRepository _repository = AppRepository();
 
-  bool loading = false;
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
-  void signup() async {
-    setState(() => loading = true);
+  Future<void> signup() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
 
-    final error = await _auth.signUp(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-    );
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill all fields')),
+        );
+      }
+      return;
+    }
 
-    setState(() => loading = false);
+    if (password != confirmPassword) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Passwords do not match')),
+        );
+      }
+      return;
+    }
 
-    if (error != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+    setState(() => isLoading = true);
+
+    final error = await _repository.auth.signUp(email, password);
+
+    setState(() => isLoading = false);
+
+    if (!mounted) return;
+
+    if (error == null) {
+      GoRouter.of(context).go('/login');
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
       );
     }
   }
@@ -38,38 +68,75 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Sign Up")),
-      body: Padding(
-        padding: EdgeInsets.all(24),
+      appBar: AppBar(title: const Text('Sign Up')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
+            const SizedBox(height: 50),
+            const Text(
+              'Create Account',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFFF6B35),
+              ),
+            ),
+            const SizedBox(height: 50),
+            CustomTextField(
               controller: emailController,
-              decoration: InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
-              ),
+              label: 'Email',
+              enabled: !isLoading,
             ),
-            SizedBox(height: 15),
-
-            TextField(
+            const SizedBox(height: 16),
+            CustomTextField(
               controller: passwordController,
+              label: 'Password',
               obscureText: true,
-              decoration: InputDecoration(
-                labelText: "Password",
-                border: OutlineInputBorder(),
-              ),
+              enabled: !isLoading,
             ),
-            SizedBox(height: 20),
-
+            const SizedBox(height: 16),
+            CustomTextField(
+              controller: confirmPasswordController,
+              label: 'Confirm Password',
+              obscureText: true,
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: loading ? null : signup,
-                child: loading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text("Sign Up"),
+                onPressed: isLoading ? null : signup,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Sign Up'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: isLoading
+                  ? null
+                  : () {
+                Navigator.of(context).pop();
+              },
+              child: RichText(
+                text: TextSpan(
+                  text: "Already have an account? ",
+                  style: const TextStyle(color: Colors.black),
+                  children: [
+                    TextSpan(
+                      text: 'Login',
+                      style: const TextStyle(
+                        color: Color(0xFFFF6B35),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

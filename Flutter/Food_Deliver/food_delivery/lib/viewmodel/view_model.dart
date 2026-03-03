@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:food_delivery/repository/app_repository.dart';
-
 import '../model/restaurant.dart';
 import '../model/food_item.dart';
 import '../model/cart_item.dart';
@@ -15,7 +14,19 @@ final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
 
 class AppNotifier extends StateNotifier<AppState> {
   final AppRepository repository;
+  Future<bool> login(String email, String password) async {
+    final error = await repository.auth.login(email, password);
 
+    return error == null;
+  }
+  Future<bool> signUp(String email, String password) async {
+      final error = await repository.auth.signUp(email, password);
+
+      return error==null;
+      }
+  Future<void> logout() async {
+    await repository.auth.logout();
+  }
   get _storage => repository.localStorageServiceProvider;
 
   AppNotifier(this.repository) : super(AppState((b) => b
