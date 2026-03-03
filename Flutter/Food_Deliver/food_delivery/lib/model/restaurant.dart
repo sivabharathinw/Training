@@ -1,4 +1,4 @@
-// lib/model/restaurant.dart
+
 library restaurant;
 
 import 'package:built_value/built_value.dart';

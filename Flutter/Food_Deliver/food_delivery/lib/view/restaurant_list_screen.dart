@@ -35,7 +35,7 @@ class RestaurantListScreen extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () => GoRouter.of(context).go('/cart'), // <-- updated
+                onPressed: () => GoRouter.of(context).go('/cart'),
               ),
               if (totalCount > 0)
                 Positioned(
@@ -56,7 +56,7 @@ class RestaurantListScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => GoRouter.of(context).go('/orders'), // <-- updated
+            onPressed: () => GoRouter.of(context).go('/orders'),
           ),
         ],
       ),
@@ -179,7 +179,7 @@ class _RestaurantCard extends StatelessWidget {
               ],
             ),
 
-            // Restaurant info
+
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(

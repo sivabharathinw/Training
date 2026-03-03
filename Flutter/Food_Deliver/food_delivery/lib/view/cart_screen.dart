@@ -181,7 +181,6 @@ class CartScreen extends ConsumerWidget {
             ),
           ),
 
-          // Bill Summary + Place Order
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

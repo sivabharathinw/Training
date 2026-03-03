@@ -22,7 +22,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   @override
   void initState() {
     super.initState();
-    // Load menu items for this restaurant
+
     Future.microtask(
           () => ref.appNotifier.loadMenuItems(widget.restaurant.id),
     );
@@ -34,7 +34,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     final appNotifier = ref.appNotifier;
     final menuItems = appState.menuItems;
 
-    // Group menu items by category
+
     final Map<String, List<FoodItem>> grouped = {};
     for (final item in menuItems) {
       grouped.putIfAbsent(item.category, () => []).add(item);
@@ -87,7 +87,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             ],
           ),
 
-          // Restaurant info
+
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.all(16),
