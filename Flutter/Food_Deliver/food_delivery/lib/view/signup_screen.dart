@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../repository/app_repository.dart';
-import 'restaurant_list_screen.dart';
 import '../view/widgets/custom_text_field.dart';
 import 'package:go_router/go_router.dart';
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -11,14 +11,18 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
   bool isLoading = false;
+
   final AppRepository _repository = AppRepository();
 
   @override
   void dispose() {
+    nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -26,25 +30,25 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> signup() async {
+    final name = nameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final confirmPassword = confirmPasswordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill all fields')),
-        );
-      }
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
       return;
     }
 
     if (password != confirmPassword) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Passwords do not match')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
       return;
     }
 
@@ -52,17 +56,25 @@ class _SignupScreenState extends State<SignupScreen> {
 
     final error = await _repository.auth.signUp(email, password);
 
-    setState(() => isLoading = false);
-
-    if (!mounted) return;
-
     if (error == null) {
+      //store into firestore
+      await _repository.firestore.addUser(
+        name: name,
+        email: email,
+      );
+
+      if (!mounted) return;
+
       GoRouter.of(context).go('/login');
     } else {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error)),
       );
     }
+
+    setState(() => isLoading = false);
   }
 
   @override
@@ -85,11 +97,21 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 50),
             CustomTextField(
+              controller: nameController,
+              label: 'Name',
+              enabled: !isLoading,
+            ),
+            const SizedBox(height: 16),
+
+            // Email
+            CustomTextField(
               controller: emailController,
               label: 'Email',
               enabled: !isLoading,
             ),
             const SizedBox(height: 16),
+
+            // Password
             CustomTextField(
               controller: passwordController,
               label: 'Password',
@@ -97,6 +119,8 @@ class _SignupScreenState extends State<SignupScreen> {
               enabled: !isLoading,
             ),
             const SizedBox(height: 16),
+
+            // Confirm Password
             CustomTextField(
               controller: confirmPasswordController,
               label: 'Confirm Password',
@@ -104,6 +128,7 @@ class _SignupScreenState extends State<SignupScreen> {
               enabled: !isLoading,
             ),
             const SizedBox(height: 24),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -115,22 +140,20 @@ class _SignupScreenState extends State<SignupScreen> {
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Sign Up'),
               ),
-            ),
+            ) ,
+
             const SizedBox(height: 16),
+
             GestureDetector(
-              onTap: isLoading
-                  ? null
-                  : () {
-                Navigator.of(context).pop();
-              },
+              onTap: isLoading ? null : () => context.go('/login'),
               child: RichText(
-                text: TextSpan(
+                text: const TextSpan(
                   text: "Already have an account? ",
-                  style: const TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.black),
                   children: [
                     TextSpan(
                       text: 'Login',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFFF6B35),
                         fontWeight: FontWeight.bold,
                       ),

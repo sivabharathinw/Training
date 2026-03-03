@@ -6,7 +6,7 @@ import '../model/food_item.dart';
 import '../model/cart_item.dart';
 import '../model/order.dart';
 import '../model/app_state.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
   final repo = AppRepository();
   return AppNotifier(repo);
@@ -14,6 +14,7 @@ final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
 
 class AppNotifier extends StateNotifier<AppState> {
   final AppRepository repository;
+
   Future<bool> login(String email, String password) async {
     final error = await repository.auth.login(email, password);
 
@@ -27,7 +28,11 @@ class AppNotifier extends StateNotifier<AppState> {
   Future<void> logout() async {
     await repository.auth.logout();
   }
+  Future<void> addUser({required String name, required String email}) async {
+    await repository.firestore.addUser(name: name, email: email);
+  }
   get _storage => repository.localStorageServiceProvider;
+
 
   AppNotifier(this.repository) : super(AppState((b) => b
       ..restaurants = ListBuilder<Restaurant>()
