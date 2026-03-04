@@ -25,6 +25,6 @@ abstract class LocalStorageService {
   Future<void> clearCart();
 
   // orders
-  Future<List<Order>> getOrders();
-  Future<void> saveOrder(Order order);
+  // Future<List<Order>> getOrders();
+  // Future<void> saveOrder(Order order);
 }

@@ -6,7 +6,9 @@
       <module fileurl="file://$PROJECT_DIR$/Flutter/Food_Deliver/Food_Deliver.iml" filepath="$PROJECT_DIR$/Flutter/Food_Deliver/Food_Deliver.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/Trainee.iml" filepath="$PROJECT_DIR$/.idea/Trainee.iml" />
       <module fileurl="file://$PROJECT_DIR$/Flutter/myapp/myapp.iml" filepath="$PROJECT_DIR$/Flutter/myapp/myapp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Flutter/myapp/android/myapp_android.iml" filepath="$PROJECT_DIR$/Flutter/myapp/android/myapp_android.iml" />
       <module fileurl="file://$PROJECT_DIR$/Flutter/myflutterapp/myflutterapp.iml" filepath="$PROJECT_DIR$/Flutter/myflutterapp/myflutterapp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Flutter/myflutterapp/android/myflutterapp_android.iml" filepath="$PROJECT_DIR$/Flutter/myflutterapp/android/myflutterapp_android.iml" />
     </modules>
   </component>
 </project>

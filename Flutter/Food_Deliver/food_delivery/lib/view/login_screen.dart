@@ -100,13 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: isLoading
-                  ? null
-                  : () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SignupScreen()),
-                );
-              },
+              onTap: isLoading ? null : () => context.go('/signup'),
               child: RichText(
                 text: TextSpan(
                   text: "Don't have an account? ",

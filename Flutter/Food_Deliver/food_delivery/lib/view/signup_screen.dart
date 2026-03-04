@@ -65,7 +65,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
 
-      GoRouter.of(context).go('/login');
+      context.go('/login');
     } else {
       if (!mounted) return;
 

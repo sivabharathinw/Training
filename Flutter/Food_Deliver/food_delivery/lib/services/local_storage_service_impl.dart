@@ -206,64 +206,64 @@ class LocalStorageServiceImpl implements LocalStorageService {
     await _database.delete('cart_items');
   }
 
-  @override
-  Future<List<Order>> getOrders() async {
-    final rows = await _database.query('orders', orderBy: 'id DESC');
-    return rows.map(_rowToOrder).toList();
-  }
+  // @override
+  // Future<List<Order>> getOrders() async {
+  //   final rows = await _database.query('orders', orderBy: 'id DESC');
+  //   return rows.map(_rowToOrder).toList();
+  // }
 
-  @override
-  Future<void> saveOrder(Order order) async {
-    await _database.insert(
-      'orders',
-      _orderToRow(order),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
+  // @override
+  // Future<void> saveOrder(Order order) async {
+  //   await _database.insert(
+  //     'orders',
+  //     _orderToRow(order),
+  //     conflictAlgorithm: ConflictAlgorithm.replace,
+  //   );
+  // }
 
-  Map<String, dynamic> _orderToRow(Order order) {
-    final itemsJson = jsonEncode(
-      order.items.map((item) {
-        return serializers.serializeWith(
-          CartItem.serializer,
-          item,
-        );
-      }).toList(),
-    );
-
-    return {
-      'id': order.id,
-      'restaurant_name': order.restaurantName,
-      'items_json': itemsJson,
-      'total_amount': order.totalAmount,
-      'status': order.status,
-      'placed_at': order.placedAt.toIso8601String(),
-      'delivery_address': order.deliveryAddress,
-    };
-  }
-
-  Order _rowToOrder(Map<String, dynamic> row) {
-    // Decode JSON string from database
-    final itemsRaw = jsonDecode(row['items_json'] as String) as List;
-
-    // Convert each JSON map → CartItem using serializer
-    final items = itemsRaw.map((itemJson) {
-      return serializers.deserializeWith(
-        CartItem.serializer,
-        itemJson,
-      )!;
-    }).toList();
-
-    // Build Order object
-    return Order((b) => b
-      ..id = row['id'] as int
-      ..restaurantName = row['restaurant_name'] as String
-      ..items.replace(items)
-      ..totalAmount = (row['total_amount'] as num).toDouble()
-      ..status = row['status'] as String
-      ..placedAt = DateTime.parse(row['placed_at'] as String)
-      ..deliveryAddress = row['delivery_address'] as String);
-  }
+  // Map<String, dynamic> _orderToRow(Order order) {
+  //   final itemsJson = jsonEncode(
+  //     order.items.map((item) {
+  //       return serializers.serializeWith(
+  //         CartItem.serializer,
+  //         item,
+  //       );
+  //     }).toList(),
+  //   );
+  //
+  //   return {
+  //     'id': order.id,
+  //     'restaurant_name': order.restaurantName,
+  //     'items_json': itemsJson,
+  //     'total_amount': order.totalAmount,
+  //     'status': order.status,
+  //     'placed_at': order.placedAt.toIso8601String(),
+  //     'delivery_address': order.deliveryAddress,
+  //   };
+  // }
+  //
+  // Order _rowToOrder(Map<String, dynamic> row) {
+  //   // Decode JSON string from database
+  //   final itemsRaw = jsonDecode(row['items_json'] as String) as List;
+  //
+  //   // Convert each JSON map → CartItem using serializer
+  //   final items = itemsRaw.map((itemJson) {
+  //     return serializers.deserializeWith(
+  //       CartItem.serializer,
+  //       itemJson,
+  //     )!;
+  //   }).toList();
+  //
+  //   // Build Order object
+  //   return Order((b) => b
+  //     ..id = row['id'] as int
+  //     ..restaurantName = row['restaurant_name'] as String
+  //     ..items.replace(items)
+  //     ..totalAmount = (row['total_amount'] as num).toDouble()
+  //     ..status = row['status'] as String
+  //     ..placedAt = DateTime.parse(row['placed_at'] as String)
+  //     ..deliveryAddress = row['delivery_address'] as String);
+  // }
 
   Map<String, dynamic> _restaurantToRow(Restaurant r) {
     final json = serializers.serializeWith(

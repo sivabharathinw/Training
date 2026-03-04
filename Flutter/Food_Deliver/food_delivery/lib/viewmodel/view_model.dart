@@ -21,10 +21,10 @@ class AppNotifier extends StateNotifier<AppState> {
     return error == null;
   }
   Future<bool> signUp(String email, String password) async {
-      final error = await repository.auth.signUp(email, password);
+    final error = await repository.auth.signUp(email, password);
 
-      return error==null;
-      }
+    return error==null;
+  }
   Future<void> logout() async {
     await repository.auth.logout();
   }
@@ -35,11 +35,11 @@ class AppNotifier extends StateNotifier<AppState> {
 
 
   AppNotifier(this.repository) : super(AppState((b) => b
-      ..restaurants = ListBuilder<Restaurant>()
-      ..menuItems = ListBuilder<FoodItem>()
-      ..cartItems = ListBuilder<CartItem>()
-      ..orders = ListBuilder<Order>()
-      ..searchQuery = '')) {
+    ..restaurants = ListBuilder<Restaurant>()
+    ..menuItems = ListBuilder<FoodItem>()
+    ..cartItems = ListBuilder<CartItem>()
+    ..orders = ListBuilder<Order>()
+    ..searchQuery = '')) {
     _init();
   }
 
@@ -90,7 +90,7 @@ class AppNotifier extends StateNotifier<AppState> {
   List<Restaurant> get filteredRestaurants {
     if (state.searchQuery.isEmpty) return state.restaurants.toList();
     return state.restaurants.where((r) =>
-        r.name.toLowerCase().contains(state.searchQuery) ||
+    r.name.toLowerCase().contains(state.searchQuery) ||
         r.cuisine.toLowerCase().contains(state.searchQuery)).toList();
   }
 
@@ -137,28 +137,35 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 
   Future<void> _loadOrders() async {
-    final orders = await _storage.getOrders();
+
+    final orders = await repository.firestore.getOrders();
+
     _updateState(orders: orders);
   }
-
   Future<void> placeOrder({
     required List<CartItem> cartItems,
     required String restaurantName,
     required double totalAmount,
     required String deliveryAddress,
-  }) async {
-    final order = Order((b) => b
-      ..id = 0
-      ..restaurantName = restaurantName
-      ..items = ListBuilder(cartItems)
-      ..totalAmount = totalAmount
-      ..status = 'placed'
-      ..placedAt = DateTime.now()
-      ..deliveryAddress = deliveryAddress);
-    await _storage.saveOrder(order);
-    await _loadOrders();
+  }) {
+    // Convert CartItem objects to Map
+    final itemsData = cartItems.map((item) => {
+      'name': item.foodItemName,
+      'price': item.price,
+      'quantity': item.quantity,
+      'restaurantName': restaurantName,
+    }).toList();
+
+    return repository.firestore.placeOrder(
+      items: itemsData,
+      totalAmount: totalAmount,
+      deliveryAddress: deliveryAddress,
+    );
   }
+
 }
+
+
 
 
 
