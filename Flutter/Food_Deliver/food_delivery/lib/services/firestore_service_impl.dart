@@ -5,6 +5,7 @@ import 'package:food_delivery/model/order.dart';
 import '../model/cart_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:food_delivery/model/serializers.dart';
+
 class FirestoreServiceImpl implements FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -17,7 +18,6 @@ class FirestoreServiceImpl implements FirestoreService {
     required String email,
   }) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-
     return usersCollection.doc(uid).set({
       'name': name,
       'email': email,
@@ -35,10 +35,13 @@ class FirestoreServiceImpl implements FirestoreService {
 
     final orderData = {
       'userId': uid,
-      'restaurantName': items.isNotEmpty ? items.first['restaurantName'] : '',
-      'items': items,
+      'restaurantName': items.isNotEmpty ? items.first['restaurantName'] ?? '' : '',
+      'items': items, // already correct key-value maps from view_model
       'totalAmount': totalAmount,
       'deliveryAddress': deliveryAddress,
+      // Store as ISO8601 String — built_value serializer can read this back
+      'placedAt': DateTime.now().toIso8601String(),
+      // Also store as Timestamp for Firestore console visibility
       'orderDate': FieldValue.serverTimestamp(),
       'status': 'pending',
     };
@@ -47,28 +50,57 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
-
-
-
   Future<List<Order>> getOrders() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    final snapshot = await FirebaseFirestore.instance
+    // No .orderBy() — avoids needing a Firestore composite index.
+    // Sorting is done locally below.
+    final snapshot = await _firestore
         .collection('orders')
         .where('userId', isEqualTo: uid)
-        .orderBy('orderDate', descending: true)
         .get();
 
-    return snapshot.docs.map((doc) {
-      final data = doc.data() as Map<String, dynamic>;
+    final orders = snapshot.docs.map((doc) {
+      final data = Map<String, dynamic>.from(doc.data());
 
-      // convert firestore timestamp to dateTime
-      data['placedAt'] = (data['orderDate'] as Timestamp?)?.toDate() ?? DateTime.now();
-      data['id'] = doc.id.hashCode; // add id to data for your model
+      // Add int id from document id
+      data['id'] = doc.id.hashCode;
 
-      // deserialize into order object automatically
-      final order = serializers.deserializeWith(Order.serializer, data);
-      return order!;
+      // Remove Firestore Timestamp — built_value serializer cannot handle it.
+      // We rely on the ISO8601 String 'placedAt' field instead.
+      data.remove('orderDate');
+
+      // Fallback if placedAt is missing
+      data['placedAt'] ??= DateTime.now().toIso8601String();
+
+      // Deserialize each item map into a CartItem using built_value serializer.
+      // Keys must exactly match CartItem fields:
+      // id, foodItemId, foodItemName, price, imageUrl, quantity,
+      // restaurantId, restaurantName
+      final rawItems = (data['items'] as List<dynamic>?) ?? [];
+      final cartItems = rawItems.asMap().entries.map((entry) {
+        final itemMap = Map<String, dynamic>.from(
+            entry.value as Map<dynamic, dynamic>);
+        // CartItem.id is required but not stored in Firestore — use list index
+        itemMap['id'] = entry.key;
+        return serializers.deserializeWith(CartItem.serializer, itemMap)!;
+      }).toList();
+
+      // Build Order using deserialized CartItems
+      return Order((b) => b
+        ..id = data['id'] as int
+        ..userId = uid
+        ..restaurantName = data['restaurantName']?.toString() ?? ''
+        ..items = ListBuilder<CartItem>(cartItems)
+        ..totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0.0
+        ..status = data['status']?.toString() ?? 'pending'
+        ..placedAt = data['placedAt'].toString()
+        ..deliveryAddress = data['deliveryAddress']?.toString() ?? '');
     }).toList();
+
+    // Sort newest first
+    orders.sort((a, b) => b.placedAt.compareTo(a.placedAt));
+
+    return orders;
   }
 }

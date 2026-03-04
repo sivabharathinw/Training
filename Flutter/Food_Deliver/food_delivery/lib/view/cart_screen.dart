@@ -228,6 +228,8 @@ class CartScreen extends ConsumerWidget {
                         deliveryAddress: 'Home',
                       );
                       await appNotifier.clearCart();
+                      await appNotifier.refreshOrders();
+
 
                       if (context.mounted) {
                         showDialog(

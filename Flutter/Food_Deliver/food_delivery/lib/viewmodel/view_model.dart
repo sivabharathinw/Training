@@ -7,6 +7,7 @@ import '../model/cart_item.dart';
 import '../model/order.dart';
 import '../model/app_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
+import 'package:food_delivery/model/serializers.dart';
 final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
   final repo = AppRepository();
   return AppNotifier(repo);
@@ -148,12 +149,10 @@ class AppNotifier extends StateNotifier<AppState> {
     required double totalAmount,
     required String deliveryAddress,
   }) {
-    // Convert CartItem objects to Map
-    final itemsData = cartItems.map((item) => {
-      'name': item.foodItemName,
-      'price': item.price,
-      'quantity': item.quantity,
-      'restaurantName': restaurantName,
+
+    final itemsData = cartItems.map((item) {
+      return serializers.serializeWith(CartItem.serializer, item)
+      as Map<String, dynamic>;
     }).toList();
 
     return repository.firestore.placeOrder(
@@ -162,12 +161,11 @@ class AppNotifier extends StateNotifier<AppState> {
       deliveryAddress: deliveryAddress,
     );
   }
-
-}
-
-
-
-
+//after placing the order it should load the ordered itemsj
+  Future<void> refreshOrders() async {
+    await _loadOrders();
+  }
+  }
 
 
 final List<Restaurant> _sampleRestaurants = [

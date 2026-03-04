@@ -105,8 +105,7 @@ class OrdersScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}  ${order.placedAt.hour}:${order.placedAt.minute.toString().padLeft(2, '0')}',
+                            Text('${order.placedAtDate.day}/${order.placedAtDate.month}/${order.placedAtDate.year}  ${order.placedAtDate.hour}:${order.placedAtDate.minute.toString().padLeft(2, '0')}',
                               style: TextStyle(
                                   color: Colors.grey[500], fontSize: 12),
                             ),
