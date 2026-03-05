@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../extensions/ref_extensions.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 class OrdersScreen extends ConsumerWidget {
   const OrdersScreen({super.key});
 
@@ -105,7 +106,8 @@ class OrdersScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('${order.placedAtDate.day}/${order.placedAtDate.month}/${order.placedAtDate.year}  ${order.placedAtDate.hour}:${order.placedAtDate.minute.toString().padLeft(2, '0')}',
+                            Text(DateFormat('dd/MM/yyyy HH:mm').format(order.placedAt),
+                            // Text('${order.placedAtDate.day}/${order.placedAtDate.month}/${order.placedAtDate.year}  ${order.placedAtDate.hour}:${order.placedAtDate.minute.padLeft(2, '0')}',
                               style: TextStyle(
                                   color: Colors.grey[500], fontSize: 12),
                             ),

@@ -35,7 +35,7 @@ class RestaurantListScreen extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () => GoRouter.of(context).go('/cart'),
+                onPressed: () => GoRouter.of(context).push('/cart'),
               ),
               if (totalCount > 0)
                 Positioned(
@@ -56,7 +56,7 @@ class RestaurantListScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => GoRouter.of(context).go('/orders'),
+            onPressed: () => GoRouter.of(context).push('/orders'),
           ),
         ],
       ),
@@ -124,7 +124,7 @@ class _RestaurantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: restaurant.isOpen
-          ? () => GoRouter.of(context).go('/menu', extra: restaurant)//here pass the rest as a extra params
+          ? () => GoRouter.of(context).push('/menu', extra: restaurant)//here pass the rest as a extra params
           : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

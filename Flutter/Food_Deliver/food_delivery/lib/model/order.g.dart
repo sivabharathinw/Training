@@ -29,7 +29,7 @@ class _$OrderSerializer implements StructuredSerializer<Order> {
       'items',
       serializers.serialize(object.items,
           specifiedType:
-          const FullType(BuiltList, [FullType(CartItem)])),
+              const FullType(BuiltList, const [const FullType(CartItem)])),
       'totalAmount',
       serializers.serialize(object.totalAmount,
           specifiedType: const FullType(double)),
@@ -38,7 +38,7 @@ class _$OrderSerializer implements StructuredSerializer<Order> {
           specifiedType: const FullType(String)),
       'placedAt',
       serializers.serialize(object.placedAt,
-          specifiedType: const FullType(String)),
+          specifiedType: const FullType(DateTime)),
       'deliveryAddress',
       serializers.serialize(object.deliveryAddress,
           specifiedType: const FullType(String)),
@@ -72,9 +72,9 @@ class _$OrderSerializer implements StructuredSerializer<Order> {
           break;
         case 'items':
           result.items.replace(serializers.deserialize(value,
-              specifiedType: const FullType(
-                  BuiltList, [FullType(CartItem)]))!
-          as BuiltList<Object?>);
+                  specifiedType: const FullType(
+                      BuiltList, const [const FullType(CartItem)]))!
+              as BuiltList<Object?>);
           break;
         case 'totalAmount':
           result.totalAmount = serializers.deserialize(value,
@@ -86,7 +86,7 @@ class _$OrderSerializer implements StructuredSerializer<Order> {
           break;
         case 'placedAt':
           result.placedAt = serializers.deserialize(value,
-              specifiedType: const FullType(String))! as String;
+              specifiedType: const FullType(DateTime))! as DateTime;
           break;
         case 'deliveryAddress':
           result.deliveryAddress = serializers.deserialize(value,
@@ -113,7 +113,7 @@ class _$Order extends Order {
   @override
   final String status;
   @override
-  final String placedAt;
+  final DateTime placedAt;
   @override
   final String deliveryAddress;
 
@@ -122,15 +122,14 @@ class _$Order extends Order {
 
   _$Order._(
       {required this.id,
-        required this.userId,
-        required this.restaurantName,
-        required this.items,
-        required this.totalAmount,
-        required this.status,
-        required this.placedAt,
-        required this.deliveryAddress})
+      required this.userId,
+      required this.restaurantName,
+      required this.items,
+      required this.totalAmount,
+      required this.status,
+      required this.placedAt,
+      required this.deliveryAddress})
       : super._();
-
   @override
   Order rebuild(void Function(OrderBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -170,14 +169,14 @@ class _$Order extends Order {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'Order')
-      ..add('id', id)
-      ..add('userId', userId)
-      ..add('restaurantName', restaurantName)
-      ..add('items', items)
-      ..add('totalAmount', totalAmount)
-      ..add('status', status)
-      ..add('placedAt', placedAt)
-      ..add('deliveryAddress', deliveryAddress))
+          ..add('id', id)
+          ..add('userId', userId)
+          ..add('restaurantName', restaurantName)
+          ..add('items', items)
+          ..add('totalAmount', totalAmount)
+          ..add('status', status)
+          ..add('placedAt', placedAt)
+          ..add('deliveryAddress', deliveryAddress))
         .toString();
   }
 }
@@ -210,9 +209,9 @@ class OrderBuilder implements Builder<Order, OrderBuilder> {
   String? get status => _$this._status;
   set status(String? status) => _$this._status = status;
 
-  String? _placedAt;
-  String? get placedAt => _$this._placedAt;
-  set placedAt(String? placedAt) => _$this._placedAt = placedAt;
+  DateTime? _placedAt;
+  DateTime? get placedAt => _$this._placedAt;
+  set placedAt(DateTime? placedAt) => _$this._placedAt = placedAt;
 
   String? _deliveryAddress;
   String? get deliveryAddress => _$this._deliveryAddress;

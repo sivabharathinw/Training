@@ -8,12 +8,15 @@ import '../model/order.dart';
 import '../model/app_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:food_delivery/model/serializers.dart';
+import 'dart:async';//for streams
 final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
   final repo = AppRepository();
   return AppNotifier(repo);
 });
 
 class AppNotifier extends StateNotifier<AppState> {
+  StreamSubscription? _ordersSubscription;
+
   final AppRepository repository;
 
   Future<bool> login(String email, String password) async {
@@ -48,7 +51,7 @@ class AppNotifier extends StateNotifier<AppState> {
     await repository.init();
     await _loadRestaurants();
     await _loadCart();
-    await _loadOrders();
+    _loadOrders();
   }
 
   void _updateState({
@@ -137,11 +140,13 @@ class AppNotifier extends StateNotifier<AppState> {
     _updateState(cartItems: []);
   }
 
-  Future<void> _loadOrders() async {
-
-    final orders = await repository.firestore.getOrders();
-
-    _updateState(orders: orders);
+  void _loadOrders() {
+    _ordersSubscription?.cancel();
+    _ordersSubscription = repository.firestore
+        .getOrders()
+        .listen((orders) {
+      _updateState(orders: orders);
+    });
   }
   Future<void> placeOrder({
     required List<CartItem> cartItems,
@@ -161,9 +166,11 @@ class AppNotifier extends StateNotifier<AppState> {
       deliveryAddress: deliveryAddress,
     );
   }
-//after placing the order it should load the ordered itemsj
-  Future<void> refreshOrders() async {
-    await _loadOrders();
+
+  @override
+  void dispose() {
+    _ordersSubscription?.cancel();
+    super.dispose();
   }
   }
 

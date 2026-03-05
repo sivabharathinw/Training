@@ -66,7 +66,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               Stack(children: [
                 IconButton(
                   icon: const Icon(Icons.shopping_cart_outlined),
-                  onPressed: () => context.go('/cart'),
+                  onPressed: () => context.push('/cart'),
                 ),
                 if (appState.itemCount > 0)
                   Positioned(
@@ -173,7 +173,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
-            onPressed: () => context.go('/cart'),
+            onPressed: () => context.push('/cart'),
             child: Text(
               'View Cart (${appState.itemCount} items) • ₹${appState.totalPrice.toStringAsFixed(0)}',
               style: const TextStyle(

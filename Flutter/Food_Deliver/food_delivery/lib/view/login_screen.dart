@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (error == null) {
-      GoRouter.of(context).go('/restaurants');
+      GoRouter.of(context).push('/restaurants');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error)),
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: isLoading ? null : () => context.go('/signup'),
+              onTap: isLoading ? null : () => context.push('/signup'),
               child: RichText(
                 text: TextSpan(
                   text: "Don't have an account? ",

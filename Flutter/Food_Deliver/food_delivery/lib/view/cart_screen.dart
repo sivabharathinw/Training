@@ -2,21 +2,86 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../extensions/ref_extensions.dart';
 import '../viewmodel/view_model.dart';
-import 'orders_screen.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../extensions/ref_extensions.dart';
-import '../viewmodel/view_model.dart';
 import 'package:go_router/go_router.dart';
 
-class CartScreen extends ConsumerWidget {
+class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appState = ref.appState;
-    final appNotifier = ref.appNotifier;
+  ConsumerState<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends ConsumerState<CartScreen> {
+  bool _isPlacingOrder = false;
+
+  Future<void> _placeOrder() async {
+    final appState = ref.read(appProvider);
+    final appNotifier = ref.read(appProvider.notifier);
+    final cartItems = appState.cartItems;
+    final deliveryFee = 19.0;
+
+    if (cartItems.isEmpty) return;
+
+    setState(() => _isPlacingOrder = true);
+
+    final restaurantName = cartItems.first.restaurantName;
+    final total = appState.totalPrice + deliveryFee;
+
+    try {
+      await appNotifier.placeOrder(
+        cartItems: cartItems.toList(),
+        restaurantName: restaurantName,
+        totalAmount: total,
+        deliveryAddress: 'Home',
+      );
+
+      await appNotifier.clearCart();
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 8),
+              Text('Order Placed!'),
+            ],
+          ),
+          content: Text(
+            'Your order from $restaurantName has been placed successfully!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('View Orders'),
+            ),
+          ],
+        ),
+      );
+
+      // This runs after dialog is dismissed
+      if (!mounted) return;
+      context.push('/orders');
+
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to place order: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isPlacingOrder = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = ref.watch(appProvider);
+    final appNotifier = ref.read(appProvider.notifier);
     final cartItems = appState.cartItems;
     final deliveryFee = 19.0;
 
@@ -30,26 +95,31 @@ class CartScreen extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: cartItems.isEmpty
+      body: _isPlacingOrder
+          ? const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Color(0xFFFF6B35)),
+            SizedBox(height: 16),
+            Text('Placing your order...'),
+          ],
+        ),
+      )
+          : cartItems.isEmpty
           ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 80,
-              color: Colors.grey[300],
-            ),
+            Icon(Icons.shopping_cart_outlined,
+                size: 80, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            Text(
-              'Your cart is empty',
-              style: TextStyle(fontSize: 18, color: Colors.grey[500]),
-            ),
+            Text('Your cart is empty',
+                style: TextStyle(
+                    fontSize: 18, color: Colors.grey[500])),
             const SizedBox(height: 8),
-            Text(
-              'Add items from a restaurant',
-              style: TextStyle(color: Colors.grey[400]),
-            ),
+            Text('Add items from a restaurant',
+                style: TextStyle(color: Colors.grey[400])),
           ],
         ),
       )
@@ -89,10 +159,8 @@ class CartScreen extends ConsumerWidget {
                             width: 80,
                             height: 80,
                             color: Colors.grey[200],
-                            child: const Icon(
-                              Icons.fastfood,
-                              color: Colors.grey,
-                            ),
+                            child: const Icon(Icons.fastfood,
+                                color: Colors.grey),
                           ),
                         ),
                       ),
@@ -100,7 +168,8 @@ class CartScreen extends ConsumerWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
                             children: [
                               Text(
                                 item.foodItemName,
@@ -134,32 +203,31 @@ class CartScreen extends ConsumerWidget {
                                     children: [
                                       _QtyButton(
                                         icon: Icons.remove,
-                                        onTap: () =>
-                                            appNotifier.decreaseQuantity(
-                                                item),
+                                        onTap: () => appNotifier
+                                            .decreaseQuantity(item),
                                       ),
                                       Padding(
-                                        padding:
-                                        const EdgeInsets.symmetric(
+                                        padding: const EdgeInsets
+                                            .symmetric(
                                             horizontal: 10),
                                         child: Text(
                                           '${item.quantity}',
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight:
+                                            FontWeight.bold,
                                             fontSize: 16,
                                           ),
                                         ),
                                       ),
                                       _QtyButton(
                                         icon: Icons.add,
-                                        onTap: () =>
-                                            appNotifier.increaseQuantity(
-                                                item),
+                                        onTap: () => appNotifier
+                                            .increaseQuantity(item),
                                       ),
                                       const SizedBox(width: 8),
                                       GestureDetector(
-                                        onTap: () =>
-                                            appNotifier.removeItem(item.id),
+                                        onTap: () => appNotifier
+                                            .removeItem(item.id),
                                         child: const Icon(
                                           Icons.delete_outline,
                                           color: Colors.red,
@@ -180,7 +248,6 @@ class CartScreen extends ConsumerWidget {
               },
             ),
           ),
-
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -197,8 +264,7 @@ class CartScreen extends ConsumerWidget {
               children: [
                 _BillRow(
                   label: 'Subtotal',
-                  value:
-                  '₹${appState.totalPrice.toStringAsFixed(0)}',
+                  value: '₹${appState.totalPrice.toStringAsFixed(0)}',
                 ),
                 const SizedBox(height: 6),
                 _BillRow(
@@ -216,55 +282,13 @@ class CartScreen extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final restaurantName =
-                          cartItems.first.restaurantName;
-                      final total = appState.totalPrice + deliveryFee;
-
-                      await appNotifier.placeOrder(
-                        cartItems: cartItems.toList(),
-                        restaurantName: restaurantName,
-                        totalAmount: total,
-                        deliveryAddress: 'Home',
-                      );
-                      await appNotifier.clearCart();
-                      await appNotifier.refreshOrders();
-
-
-                      if (context.mounted) {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Row(
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                ),
-                                SizedBox(width: 8),
-                                Text('Order Placed!'),
-                              ],
-                            ),
-                            content: Text(
-                              'Your order from $restaurantName has been placed successfully!',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  GoRouter.of(context).go('/orders');
-                                },
-                                child: const Text('View Orders'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
+                    onPressed:
+                    _isPlacingOrder ? null : _placeOrder,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B35),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -287,7 +311,6 @@ class CartScreen extends ConsumerWidget {
   }
 }
 
-
 class _QtyButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -304,11 +327,7 @@ class _QtyButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         padding: const EdgeInsets.all(6),
-        child: Icon(
-          icon,
-          size: 18,
-          color: Colors.black,
-        ),
+        child: Icon(icon, size: 18, color: Colors.black),
       ),
     );
   }
@@ -319,27 +338,22 @@ class _BillRow extends StatelessWidget {
   final String value;
   final bool isBold;
 
-  const _BillRow({required this.label, required this.value, this.isBold = false});
+  const _BillRow(
+      {required this.label, required this.value, this.isBold = false});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
-          ),
-        ),
+        Text(label,
+            style: TextStyle(
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14)),
+        Text(value,
+            style: TextStyle(
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14)),
       ],
     );
   }

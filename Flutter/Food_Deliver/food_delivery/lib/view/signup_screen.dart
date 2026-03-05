@@ -65,7 +65,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
 
-      context.go('/login');
+      context.push('/login');
     } else {
       if (!mounted) return;
 
@@ -145,7 +145,7 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 16),
 
             GestureDetector(
-              onTap: isLoading ? null : () => context.go('/login'),
+              onTap: isLoading ? null : () => context.push('/login'),
               child: RichText(
                 text: const TextSpan(
                   text: "Already have an account? ",

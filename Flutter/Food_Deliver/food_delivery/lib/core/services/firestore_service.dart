@@ -11,6 +11,6 @@ abstract class FirestoreService {
     required double totalAmount,
     required String deliveryAddress,
   });
-  Future<List<Order>> getOrders();
+  Stream<List<Order>> getOrders();
 }
 
