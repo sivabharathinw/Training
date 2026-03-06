@@ -15,6 +15,8 @@ final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
 });
 
 class AppNotifier extends StateNotifier<AppState> {
+  //StreamSubscription is a connection between app and stream it can listen the streams ,pasuse and cancel the streams
+  
   StreamSubscription? _ordersSubscription;
 
   final AppRepository repository;
