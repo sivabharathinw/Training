@@ -55,7 +55,8 @@ class AppNotifier extends StateNotifier<AppState> {
     await _loadCart();
     _loadOrders();
   }
-
+//in updateState  it have restaurants, menuItems, cartItems, orders, searchQuery.
+  //it is in optional parameters, so we can update any of them without affecting the others.
   void _updateState({
     List<Restaurant>? restaurants,
     List<FoodItem>? menuItems,
@@ -63,6 +64,7 @@ class AppNotifier extends StateNotifier<AppState> {
     List<Order>? orders,
     String? searchQuery,
   }) {
+    //state is immutable, so we need to rebuild it with the new values. We only update the fields that are provided, leaving the others unchanged.
     state = state.rebuild((b) {
       if (restaurants != null) b.restaurants = ListBuilder(restaurants);
       if (menuItems != null) b.menuItems = ListBuilder(menuItems);
@@ -73,40 +75,21 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 
   Future<void> _loadRestaurants() async {
-    final existing = await _storage.getRestaurants();
-
-    if (existing.isEmpty) {
-      await _storage.insertAllRestaurants(_sampleRestaurants);
-      await _storage.insertAllFoodItems(_sampleFoodItems);
-
-
+    final existing = await repository.firestore.getRestaurants();
+    if(existing==null){
       await repository.firestore.insertAllRestaurants(_sampleRestaurants);
-      await repository.firestore.insertAllFoodItems(_sampleFoodItems);
-
       _updateState(restaurants: _sampleRestaurants);
-    } else {
-      _updateState(restaurants: existing);
     }
   }
 
+
   Future<void> loadMenuItems(int restaurantId) async {
-    final items = await _storage.getFoodItems(restaurantId);
+    final items = await repository.firestore.getFoodItems(restaurantId);
     _updateState(menuItems: items);
   }
 
-  void updateSearch(String query) {
-    _updateState(searchQuery: query.toLowerCase());
-  }
-
-  List<Restaurant> get filteredRestaurants {
-    if (state.searchQuery.isEmpty) return state.restaurants.toList();
-    return state.restaurants.where((r) =>
-    r.name.toLowerCase().contains(state.searchQuery) ||
-        r.cuisine.toLowerCase().contains(state.searchQuery)).toList();
-  }
-
   Future<void> _loadCart() async {
-    final items = await _storage.getCartItems();
+    final items = await repository.firestore.getCartItems();
     _updateState(cartItems: items);
   }
 
@@ -121,58 +104,43 @@ class AppNotifier extends StateNotifier<AppState> {
       ..restaurantId = restaurant.id
       ..restaurantName = restaurant.name);
 
-    // sql lite
-    await _storage.addCartItem(cartItem);
-
-    // firestore — this creates the cart collection
     await repository.firestore.addCartItem(cartItem);
-
     await _loadCart();
   }
 
-  Future<void> addToCart(CartItem item) async {
-    await repository.firestore.addCartItem(item);
-  }
-
   Future<void> increaseQuantity(CartItem item) async {
-    await _storage.updateCartItemQuantity(item.id, item.quantity + 1);
+    await repository.firestore.updateCartItemQuantity(item.id, item.quantity + 1);
     await _loadCart();
   }
 
   Future<void> decreaseQuantity(CartItem item) async {
     if (item.quantity <= 1) {
-      await _storage.removeCartItem(item.id);
+      await repository.firestore.removeCartItem(item.id);
     } else {
-      await _storage.updateCartItemQuantity(item.id, item.quantity - 1);
+      await repository.firestore.updateCartItemQuantity(item.id, item.quantity - 1);
     }
     await _loadCart();
   }
+  Future<void> addToCart(CartItem item) async {
+    await repository.firestore.addCartItem(item);
+  }
 
   Future<void> removeItem(int cartItemId) async {
-    await _storage.removeCartItem(cartItemId);
+    await repository.firestore.removeCartItem(cartItemId);
     await _loadCart();
   }
 
   Future<void> clearCart() async {
-    await _storage.clearCart();
+    await repository.firestore.clearCart();
     _updateState(cartItems: []);
   }
 
-  void _loadOrders() {
-    _ordersSubscription?.cancel();
-    _ordersSubscription = repository.firestore
-        .getOrders()
-        .listen((orders) {
-      _updateState(orders: orders);
-    });
-  }
   Future<void> placeOrder({
     required List<CartItem> cartItems,
     required String restaurantName,
     required double totalAmount,
     required String deliveryAddress,
   }) {
-
     final itemsData = cartItems.map((item) {
       return serializers.serializeWith(CartItem.serializer, item)
       as Map<String, dynamic>;
@@ -183,6 +151,23 @@ class AppNotifier extends StateNotifier<AppState> {
       totalAmount: totalAmount,
       deliveryAddress: deliveryAddress,
     );
+  }
+  void updateSearch(String query) {
+    _updateState(searchQuery: query.toLowerCase());
+  }
+
+  List<Restaurant> get filteredRestaurants {
+    if (state.searchQuery.isEmpty) return state.restaurants.toList();
+    return state.restaurants.where((r) =>
+    r.name.toLowerCase().contains(state.searchQuery) ||
+        r.cuisine.toLowerCase().contains(state.searchQuery)).toList();
+  }
+
+  void _loadOrders() {
+    _ordersSubscription?.cancel();
+    _ordersSubscription = repository.firestore.getOrders().listen((orders) {
+      _updateState(orders: orders);
+    });
   }
 
   @override

@@ -15,8 +15,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   bool _isPlacingOrder = false;
 
   Future<void> _placeOrder() async {
-    final appState = ref.read(appProvider);
-    final appNotifier = ref.read(appProvider.notifier);
+    final appState = ref.appState;
+    final appNotifier = ref.appNotifier;
     final cartItems = appState.cartItems;
     final deliveryFee = 19.0;
 
@@ -80,8 +80,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = ref.watch(appProvider);
-    final appNotifier = ref.read(appProvider.notifier);
+    final appState = ref.appState;
+    final appNotifier = ref.appNotifier;
     final cartItems = appState.cartItems;
     final deliveryFee = 19.0;
 
