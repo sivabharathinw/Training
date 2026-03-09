@@ -14,6 +14,31 @@ class LocalStorageServiceImpl implements LocalStorageService {
   static Database? _db;
 
   @override
+  Future<void> addUser({
+    required String name,
+    required String email,
+  }) async {
+   //create user table if not exists and insert user data
+    await _database.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+
+    await _database.insert(
+      'users',
+      {
+        'name': name,
+        'email': email,
+        'createdAt': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+  @override
   Future<void> init() async {
     if (_db != null) return;
     final dbPath = await getDatabasesPath();
@@ -206,64 +231,95 @@ class LocalStorageServiceImpl implements LocalStorageService {
     await _database.delete('cart_items');
   }
 
-  // @override
-  // Future<List<Order>> getOrders() async {
-  //   final rows = await _database.query('orders', orderBy: 'id DESC');
-  //   return rows.map(_rowToOrder).toList();
-  // }
+  @override
+  Future<void> placeOrder({
+    required List<Map<String, dynamic>> items,
+    required double totalAmount,
+    required String deliveryAddress,
+  }) async {
+    final itemsJson = jsonEncode(items);
+    final restaurantName = items.isNotEmpty
+        ? items.first['restaurantName'] ?? ''
+        : '';
+    final userId = items.isNotEmpty
+        ? items.first['userId'] ?? ''
+        : '';
 
-  // @override
-  // Future<void> saveOrder(Order order) async {
-  //   await _database.insert(
-  //     'orders',
-  //     _orderToRow(order),
-  //     conflictAlgorithm: ConflictAlgorithm.replace,
-  //   );
-  // }
+    await _database.insert(
+      'orders',
+      {
+        'user_id': userId,
+        'restaurant_name': restaurantName,
+        'items_json': itemsJson,
+        'total_amount': totalAmount,
+        'status': 'pending',
+        'placed_at': DateTime.now().toIso8601String(),
+        'delivery_address': deliveryAddress,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 
-  // Map<String, dynamic> _orderToRow(Order order) {
-  //   final itemsJson = jsonEncode(
-  //     order.items.map((item) {
-  //       return serializers.serializeWith(
-  //         CartItem.serializer,
-  //         item,
-  //       );
-  //     }).toList(),
-  //   );
-  //
-  //   return {
-  //     'id': order.id,
-  //     'restaurant_name': order.restaurantName,
-  //     'items_json': itemsJson,
-  //     'total_amount': order.totalAmount,
-  //     'status': order.status,
-  //     'placed_at': order.placedAt.toIso8601String(),
-  //     'delivery_address': order.deliveryAddress,
-  //   };
-  // }
-  //
-  // Order _rowToOrder(Map<String, dynamic> row) {
-  //   // Decode JSON string from database
-  //   final itemsRaw = jsonDecode(row['items_json'] as String) as List;
-  //
-  //   // Convert each JSON map → CartItem using serializer
-  //   final items = itemsRaw.map((itemJson) {
-  //     return serializers.deserializeWith(
-  //       CartItem.serializer,
-  //       itemJson,
-  //     )!;
-  //   }).toList();
-  //
-  //   // Build Order object
-  //   return Order((b) => b
-  //     ..id = row['id'] as int
-  //     ..restaurantName = row['restaurant_name'] as String
-  //     ..items.replace(items)
-  //     ..totalAmount = (row['total_amount'] as num).toDouble()
-  //     ..status = row['status'] as String
-  //     ..placedAt = DateTime.parse(row['placed_at'] as String)
-  //     ..deliveryAddress = row['delivery_address'] as String);
-  // }
+   @override
+   Stream<List<Order>> getOrders() {
+     return Stream.fromFuture(
+       _database
+           .query('orders', orderBy: 'id DESC')
+           .then((rows) => rows.map(_rowToOrder).toList()),
+     );
+   }
+
+  @override
+   Future<void> saveOrder(Order order) async {
+     await _database.insert(
+       'orders',
+       _orderToRow(order),
+       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+   }
+
+  Map<String, dynamic> _orderToRow(Order order) {
+    final itemsJson = jsonEncode(
+       order.items.map((item) {
+        return serializers.serializeWith(
+          CartItem.serializer,
+           item,
+         );
+}).toList(),
+   );
+
+   return {
+      'id': order.id,
+     'restaurant_name': order.restaurantName,
+  'items_json': itemsJson,
+      'total_amount': order.totalAmount,
+     'status': order.status,
+     'placed_at': order.placedAt.toIso8601String(),
+      'delivery_address': order.deliveryAddress,
+     };
+   }
+
+   Order _rowToOrder(Map<String, dynamic> row) {
+     // Decode JSON string from database
+     final itemsRaw = jsonDecode(row['items_json'] as String) as List;
+
+  // Convert each JSON map → CartItem using serializer
+    final items = itemsRaw.map((itemJson) {
+      return serializers.deserializeWith(
+         CartItem.serializer,
+        itemJson,
+      )!;
+     }).toList();
+  // Build Order object
+    return Order((b) => b
+      ..id = row['id'] as int
+      ..restaurantName = row['restaurant_name'] as String
+     ..items.replace(items)
+       ..totalAmount = (row['total_amount'] as num).toDouble()
+       ..status = row['status'] as String
+       ..placedAt = DateTime.parse(row['placed_at'] as String)
+      ..deliveryAddress = row['delivery_address'] as String);
+   }
 
   Map<String, dynamic> _restaurantToRow(Restaurant r) {
     final json = serializers.serializeWith(

@@ -78,6 +78,11 @@ class AppNotifier extends StateNotifier<AppState> {
     if (existing.isEmpty) {
       await _storage.insertAllRestaurants(_sampleRestaurants);
       await _storage.insertAllFoodItems(_sampleFoodItems);
+
+
+      await repository.firestore.insertAllRestaurants(_sampleRestaurants);
+      await repository.firestore.insertAllFoodItems(_sampleFoodItems);
+
       _updateState(restaurants: _sampleRestaurants);
     } else {
       _updateState(restaurants: existing);
@@ -106,7 +111,7 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 
   Future<void> addItem(FoodItem foodItem, Restaurant restaurant) async {
-    await _storage.addCartItem(CartItem((b) => b
+    final cartItem = CartItem((b) => b
       ..id = 0
       ..foodItemId = foodItem.id
       ..foodItemName = foodItem.name
@@ -114,8 +119,19 @@ class AppNotifier extends StateNotifier<AppState> {
       ..imageUrl = foodItem.imageUrl
       ..quantity = 1
       ..restaurantId = restaurant.id
-      ..restaurantName = restaurant.name));
+      ..restaurantName = restaurant.name);
+
+    // sql lite
+    await _storage.addCartItem(cartItem);
+
+    // firestore — this creates the cart collection
+    await repository.firestore.addCartItem(cartItem);
+
     await _loadCart();
+  }
+
+  Future<void> addToCart(CartItem item) async {
+    await repository.firestore.addCartItem(item);
   }
 
   Future<void> increaseQuantity(CartItem item) async {
@@ -174,7 +190,7 @@ class AppNotifier extends StateNotifier<AppState> {
     _ordersSubscription?.cancel();
     super.dispose();
   }
-  }
+}
 
 
 final List<Restaurant> _sampleRestaurants = [

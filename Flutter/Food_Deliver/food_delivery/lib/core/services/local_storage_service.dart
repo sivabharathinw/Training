@@ -25,6 +25,20 @@ abstract class LocalStorageService {
   Future<void> clearCart();
 
   // orders
-  // Future<List<Order>> getOrders();
-  // Future<void> saveOrder(Order order);
+  Future<void> placeOrder({required List<Map<String,
+      dynamic>> items, required double totalAmount,
+    required String deliveryAddress,
+  });
+  Stream<List<Order>> getOrders();
+
+
+
+  Future<void> saveOrder(Order order);
+
+
+  // add user
+  Future<void> addUser({
+    required String name,
+    required String email,
+  });
 }
