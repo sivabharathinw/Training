@@ -9,6 +9,9 @@
       <excludeFolder url="file://$MODULE_DIR$/Flutter/user_clean_architecture/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/Flutter/user_clean_architecture/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/Flutter/user_clean_architecture/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/animation/animations/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/animation/animations/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/animation/animations/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
