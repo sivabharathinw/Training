@@ -16,7 +16,7 @@ final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
 
 class AppNotifier extends StateNotifier<AppState> {
   //StreamSubscription is a connection between app and stream it can listen the streams ,pasuse and cancel the streams
-  
+
   StreamSubscription? _ordersSubscription;
 
   final AppRepository repository;
@@ -76,10 +76,14 @@ class AppNotifier extends StateNotifier<AppState> {
 
   Future<void> _loadRestaurants() async {
     final existing = await repository.firestore.getRestaurants();
-    if(existing==null){
-      await repository.firestore.insertAllRestaurants(_sampleRestaurants);
-      _updateState(restaurants: _sampleRestaurants);
-    }
+
+      if(existing.isEmpty) {
+        await repository.firestore.insertAllRestaurants(_sampleRestaurants);
+        await repository.firestore.insertAllFoodItems(_sampleFoodItems);
+        _updateState(restaurants: _sampleRestaurants);
+      } else {
+        _updateState(restaurants: existing);
+      }
   }
 
 
