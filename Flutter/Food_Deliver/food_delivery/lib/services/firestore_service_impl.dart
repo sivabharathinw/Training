@@ -17,7 +17,7 @@ class FirestoreServiceImpl implements LocalStorageService{
   FirebaseFirestore.instance.collection('User');
 @override
 Future<void> init() async {
-getRestaurants();
+
 }
   @override
   Future<void> addUser({
