@@ -364,13 +364,13 @@ final List<FoodItem> _sampleFoodItems = [
     ..price = 329.0
     ..imageUrl = 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300'
     ..category = 'Pizza' ..isAvailable = true),
-  FoodItem((b) => b
-    ..id = 204 ..restaurantId = 2
-    ..name = 'Garlic Bread'
-    ..description = 'Toasted ciabatta with herb garlic butter'
-    ..price = 89.0
-    ..imageUrl = 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=300'
-    ..category = 'Sides' ..isAvailable = true),
+  // FoodItem((b) => b
+  //   ..id = 204 ..restaurantId = 2
+  //   ..name = 'Garlic Bread'
+  //   ..description = 'Toasted ciabatta with herb garlic butter'
+  //   ..price = 89.0
+  //  ..imageUrl = 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=300'
+   //  ..category = 'Sides' ..isAvailable = true),
   FoodItem((b) => b
     ..id = 205 ..restaurantId = 2
     ..name = 'Four Cheese Pizza'
@@ -390,7 +390,7 @@ final List<FoodItem> _sampleFoodItems = [
     ..name = 'Salmon Nigiri (8 pcs)'
     ..description = 'Premium fresh Atlantic salmon over seasoned sushi rice'
     ..price = 349.0
-    ..imageUrl = 'https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300'
+    ..imageUrl = 'https://unsplash.com/photos/sushi-on-wooden-platter-5KS7T3Gs3CA'
     ..category = 'Nigiri' ..isAvailable = true),
   FoodItem((b) => b
     ..id = 302 ..restaurantId = 3
@@ -495,7 +495,7 @@ final List<FoodItem> _sampleFoodItems = [
     ..name = 'Churros'
     ..description = 'Crispy fried dough sticks with cinnamon sugar & chocolate dip'
     ..price = 119.0
-    ..imageUrl = 'https://images.unsplash.com/photo-1624371414361-e670edf4a1ea?w=300'
+    ..imageUrl = 'https://unsplash.com/photos/a-plate-of-churros-next-to-a-cup-of-coffee-ZO606MdzJi0'
     ..category = 'Desserts' ..isAvailable = true),
   FoodItem((b) => b
     ..id = 601 ..restaurantId = 6
@@ -530,7 +530,7 @@ final List<FoodItem> _sampleFoodItems = [
     ..name = 'Spring Rolls (4 pcs)'
     ..description = 'Crispy fried rolls with cabbage, carrot & glass noodle filling'
     ..price = 129.0
-    ..imageUrl = 'https://images.unsplash.com/photo-1606525437560-98c4f83f7b30?w=300'
+    ..imageUrl = 'https://unsplash.com/photos/a-plate-of-food-5wWAIfnx1rM'
     ..category = 'Starters' ..isAvailable = true),
   FoodItem((b) => b
     ..id = 701 ..restaurantId = 7
@@ -625,10 +625,10 @@ final List<FoodItem> _sampleFoodItems = [
     ..category = 'Breakfast' ..isAvailable = true),
   FoodItem((b) => b
     ..id = 905 ..restaurantId = 9
-    ..name = 'Payasam'
+    ..name = 'Donut'
     ..description = 'Traditional Kerala dessert with rice, jaggery & coconut milk'
     ..price = 89.0
-    ..imageUrl = 'https://images.unsplash.com/photo-1601303516534-bf4bc5687d3e?w=300'
+    ..imageUrl = 'https://unsplash.com/photos/doughnut-with-toppings-q54Oxq44MZs'
     ..category = 'Desserts' ..isAvailable = true),
   FoodItem((b) => b
     ..id = 1001 ..restaurantId = 10
