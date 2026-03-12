@@ -109,7 +109,7 @@ class OrdersScreen extends ConsumerWidget {
                             Text(DateFormat('dd/MM/yyyy HH:mm').format(order.placedAt),
                             // Text('${order.placedAtDate.day}/${order.placedAtDate.month}/${order.placedAtDate.year}  ${order.placedAtDate.hour}:${order.placedAtDate.minute.padLeft(2, '0')}',
                               style: TextStyle(
-                                  color: Colors.grey[500], fontSize: 12),
+                                  color: Colors.grey[500], fontSize: 13),
                             ),
                             Text(
                               'Total: ₹${order.totalAmount.toStringAsFixed(0)}',

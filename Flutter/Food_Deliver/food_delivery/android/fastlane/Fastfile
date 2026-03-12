@@ -21,6 +21,17 @@ platform :android do
     gradle(task: "test")
   end
 
+
+
+  desc "Build the Android application"
+   lane :build do
+     gradle(
+       task: "assemble", # use "assemble" for APK, "bundle" for AAB
+       build_type: "Release",
+
+     )
+   end
+
   desc "Submit a new Beta Build to Crashlytics Beta"
  lane :firebase do
      firebase_app_distribution(
