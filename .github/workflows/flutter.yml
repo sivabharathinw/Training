@@ -1,5 +1,5 @@
 name: Flutter APK Build
-
+#on tells when to run the scrpt when push happens  in the main it  runs
 on:
   push:
     branches:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest  # temporary Windows machine
+    runs-on: ubuntu-latest  # temporary Windows machine
 
     steps:
       #checkout repository code
@@ -22,7 +22,7 @@ jobs:
       - run: flutter pub get
         working-directory: Flutter/Food_Deliver/food_delivery
 
-      #bcduild release APK (in nested Flutter app)
+      #build release APK (in nested Flutter app)
       - run: flutter build apk --release
         working-directory: Flutter/Food_Deliver/food_delivery
 
