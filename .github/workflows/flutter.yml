@@ -1,40 +1,34 @@
 name: Flutter APK Build
 
-on: # trigger the workflow on push to the main branch
+on:
   push:
     branches:
       - main
-      - master
-      - develop
 
-jobs: #defines a job named "build"
+jobs:
   build:
-    runs-on: windows-latest  # temporary windows machine
+    runs-on: windows-latest  # temporary Windows machine
 
     steps:
-      #initially the server is empty so we need to download the code
-      # actions means using git_hubs prebuilt actions to perform tasks , checkout is used to download the code from the repository to the runner machine
+      #checkout repository code
       - uses: actions/checkout@v4
 
-      # to build flutter code we need to set up flutter env on runner machine
+      # set up Flutter SDK
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       # install dependencies
       - run: flutter pub get
+        working-directory: Flutter/Food_Deliver/food_delivery
 
-
-
-      # build the release APK
+      #bcduild release APK (in nested Flutter app)
       - run: flutter build apk --release
+        working-directory: Flutter/Food_Deliver/food_delivery
 
-      #  save the apk as a git_hub artifact bcz after workflow finishes the runner machine destroyed so to save the apk we need to upload it as an artifact
-      #this apk stored in the build/app/outputs/flutter-apk/app-release.apk path after building the apk
+      # upload APK as artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
-          #name of the artifact that we want to save
           name: app-release
-          #location of the apk that we want to save as an artifact
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: Flutter/Food_Deliver/food_delivery/build/app/outputs/flutter-apk/app-release.apk
