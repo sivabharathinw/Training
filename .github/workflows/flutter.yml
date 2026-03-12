@@ -4,10 +4,12 @@ on: # trigger the workflow on push to the main branch
   push:
     branches:
       - main
+      - master
+      - develop
 
 jobs: #defines a job named "build"
   build:
-    runs-on: windows-latest  # Temporary Linux machine
+    runs-on: windows-latest  # temporary windows machine
 
     steps:
       #initially the server is empty so we need to download the code
