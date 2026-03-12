@@ -13,7 +13,7 @@ jobs:
       #checkout repository code
       - uses: actions/checkout@v4
         with:
-          submodules:false
+          submodules: false
 
       # set up Flutter SDK
       - uses: subosito/flutter-action@v2
