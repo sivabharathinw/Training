@@ -42,8 +42,13 @@
       <excludeFolder url="file://$MODULE_DIR$/Flutter/animation/animations/windows/flutter/ephemeral/.plugin_symlinks/rive_common/macos/rive-cpp/dev/core_generator/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/Flutter/animation/animations/windows/flutter/ephemeral/.plugin_symlinks/rive_common/macos/rive-cpp/dev/core_generator/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/Flutter/animation/animations/windows/flutter/ephemeral/.plugin_symlinks/rive_common/macos/rive-cpp/dev/core_generator/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/counter_test/counter/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/counter_test/counter/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/counter_test/counter/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Dart SDK" level="project" />
+    <orderEntry type="library" name="Dart Packages" level="project" />
   </component>
 </module>
