@@ -17,6 +17,7 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      key: key,
       controller: controller,
       enabled: enabled,
       obscureText: obscureText,

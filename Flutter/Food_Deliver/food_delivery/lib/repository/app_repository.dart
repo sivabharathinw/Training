@@ -5,11 +5,10 @@ import '../services/auth_service_impl.dart';
 import '../services/firestore_service_impl.dart';
 
 class AppRepository {
-  final LocalStorageService localStorageServiceProvider = LocalStorageServiceImpl();
   final AuthService auth = AuthService();
-  final LocalStorageService firestore = FirestoreServiceImpl();
+  final StorageService storage = FirestoreServiceImpl();
 
   init() async {
-    await localStorageServiceProvider.init();
+    await storage.init();
   }
 }

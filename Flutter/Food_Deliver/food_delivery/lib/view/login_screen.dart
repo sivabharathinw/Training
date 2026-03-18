@@ -4,6 +4,7 @@ import 'signup_screen.dart';
 import 'restaurant_list_screen.dart';
 import '../view/widgets/custom_text_field.dart';
 import 'package:go_router/go_router.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -74,12 +75,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 50),
             CustomTextField(
+              key: const Key('email'),
               controller: emailController,
               label: 'Email',
               enabled: !isLoading,
             ),
             const SizedBox(height: 16),
             CustomTextField(
+              key: const Key('password'),
               controller: passwordController,
               label: 'Password',
               obscureText: true,
@@ -89,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                key: const Key('loginButton'),
                 onPressed: isLoading ? null : login,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

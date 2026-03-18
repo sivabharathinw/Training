@@ -3,7 +3,7 @@ import '../../model/food_item.dart';
 import '../../model/cart_item.dart';
 import '../../model/order.dart';
 
-abstract class LocalStorageService {
+abstract class StorageService {
   Future<void> init();
   
 

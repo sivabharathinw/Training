@@ -23,6 +23,8 @@ android {
     }
 
     defaultConfig {
+        testInstrumentationRunner = "pl.leancode.patrol.PatrolJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.foodDelivery"
         // You can update the following values to match your application needs.
@@ -39,9 +41,18 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
+
     }
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+    }
+
 }
 
 flutter {
     source = "../.."
+}
+dependencies{
+    androidTestUtil("androidx.test:orchestrator:1.5.1")
+
 }

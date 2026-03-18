@@ -1,57 +1,44 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+
+
 import 'package:built_collection/built_collection.dart';
 import '../model/serializers.dart';
-
 import '../core/services/local_storage_service.dart';
 import '../model/restaurant.dart';
 import '../model/food_item.dart';
 import '../model/cart_item.dart';
 import '../model/order.dart';
 
-class LocalStorageServiceImpl implements LocalStorageService {
+class LocalStorageServiceImpl implements StorageService {
   static Database? _db;
 
   @override
-  Future<void> addUser({
-    required String name,
-    required String email,
-  }) async {
-   //create user table if not exists and insert user data
-    await _database.execute('''
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        createdAt TEXT NOT NULL
-      )
-    ''');
-
-    await _database.insert(
-      'users',
-      {
-        'name': name,
-        'email': email,
-        'createdAt': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-  @override
   Future<void> init() async {
     if (_db != null) return;
-    final dbPath = await getDatabasesPath();
-    _db = await openDatabase(
-      join(dbPath, 'food_delivery.db'),
-      version: 1,
-      onCreate: _onCreate,
-    );
+
+    if (kIsWeb) {
+
+      databaseFactory = databaseFactoryFfiWeb;
+      _db = await openDatabase(
+        'food_delivery.db',
+        version: 1,
+        onCreate: _onCreate,
+      );
+    } else {
+      final dbPath = await getDatabasesPath();
+      _db = await openDatabase(
+        join(dbPath, 'food_delivery.db'),
+        version: 1,
+        onCreate: _onCreate,
+      );
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
-
-    // table for restaurant — camelCase to match serializer output
     await db.execute('''
       CREATE TABLE restaurants (
         id INTEGER PRIMARY KEY,
@@ -64,8 +51,6 @@ class LocalStorageServiceImpl implements LocalStorageService {
         isOpen INTEGER NOT NULL
       )
     ''');
-
-    // table for food Items — camelCase to match serializer output
     await db.execute('''
       CREATE TABLE food_items (
         id INTEGER PRIMARY KEY,
@@ -79,8 +64,6 @@ class LocalStorageServiceImpl implements LocalStorageService {
         FOREIGN KEY (restaurantId) REFERENCES restaurants (id)
       )
     ''');
-
-    // table for Cart Items — camelCase to match serializer output
     await db.execute('''
       CREATE TABLE cart_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,8 +76,6 @@ class LocalStorageServiceImpl implements LocalStorageService {
         restaurantName TEXT NOT NULL
       )
     ''');
-
-    // table for Orders
     await db.execute('''
       CREATE TABLE orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,14 +94,43 @@ class LocalStorageServiceImpl implements LocalStorageService {
     return _db!;
   }
 
+
+  @override
+  Future<void> addUser({
+    required String name,
+    required String email,
+  }) async {
+    if (kIsWeb) return;
+    await _database.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+    await _database.insert(
+      'users',
+      {
+        'name': name,
+        'email': email,
+        'createdAt': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+
   @override
   Future<List<Restaurant>> getRestaurants() async {
+    if (kIsWeb) return [];
     final rows = await _database.query('restaurants');
     return rows.map(_rowToRestaurant).toList();
   }
 
   @override
   Future<void> insertRestaurant(Restaurant restaurant) async {
+    if (kIsWeb) return;
     await _database.insert(
       'restaurants',
       _restaurantToRow(restaurant),
@@ -130,6 +140,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<void> insertAllRestaurants(List<Restaurant> restaurants) async {
+    if (kIsWeb) return;
     final batch = _database.batch();
     for (final r in restaurants) {
       batch.insert(
@@ -141,8 +152,10 @@ class LocalStorageServiceImpl implements LocalStorageService {
     await batch.commit(noResult: true);
   }
 
+
   @override
   Future<List<FoodItem>> getFoodItems(int restaurantId) async {
+    if (kIsWeb) return [];
     final rows = await _database.query(
       'food_items',
       where: 'restaurantId = ?',
@@ -153,6 +166,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<void> insertFoodItem(FoodItem item) async {
+    if (kIsWeb) return;
     await _database.insert(
       'food_items',
       _foodItemToRow(item),
@@ -162,6 +176,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<void> insertAllFoodItems(List<FoodItem> items) async {
+    if (kIsWeb) return;
     final batch = _database.batch();
     for (final item in items) {
       batch.insert(
@@ -175,15 +190,17 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<List<CartItem>> getCartItems() async {
+    if (kIsWeb) return [];
     final rows = await _database.query('cart_items');
     return rows.map(_rowToCartItem).toList();
   }
 
   @override
   Future<void> addCartItem(CartItem item) async {
+    if (kIsWeb) return;
     final existing = await _database.query(
       'cart_items',
-      where: 'foodItemId = ?', // if briyani id is 1 and we add briyani again then it will update the quantity instead of adding new row
+      where: 'foodItemId = ?',
       whereArgs: [item.foodItemId],
     );
     if (existing.isNotEmpty) {
@@ -209,6 +226,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<void> updateCartItemQuantity(int cartItemId, int quantity) async {
+    if (kIsWeb) return;
     await _database.update(
       'cart_items',
       {'quantity': quantity},
@@ -219,6 +237,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<void> removeCartItem(int cartItemId) async {
+    if (kIsWeb) return;
     await _database.delete(
       'cart_items',
       where: 'id = ?',
@@ -228,8 +247,11 @@ class LocalStorageServiceImpl implements LocalStorageService {
 
   @override
   Future<void> clearCart() async {
+    if (kIsWeb) return;
     await _database.delete('cart_items');
   }
+
+
 
   @override
   Future<void> placeOrder({
@@ -237,18 +259,13 @@ class LocalStorageServiceImpl implements LocalStorageService {
     required double totalAmount,
     required String deliveryAddress,
   }) async {
+    if (kIsWeb) return;
     final itemsJson = jsonEncode(items);
-    final restaurantName = items.isNotEmpty
-        ? items.first['restaurantName'] ?? ''
-        : '';
-    final userId = items.isNotEmpty
-        ? items.first['userId'] ?? ''
-        : '';
-
+    final restaurantName =
+    items.isNotEmpty ? items.first['restaurantName'] ?? '' : '';
     await _database.insert(
       'orders',
       {
-        'user_id': userId,
         'restaurant_name': restaurantName,
         'items_json': itemsJson,
         'total_amount': totalAmount,
@@ -260,131 +277,90 @@ class LocalStorageServiceImpl implements LocalStorageService {
     );
   }
 
-   @override
-   Stream<List<Order>> getOrders() {
-     return Stream.fromFuture(
-       _database
-           .query('orders', orderBy: 'id DESC')
-           .then((rows) => rows.map(_rowToOrder).toList()),
-     );
-   }
+  @override
+  Stream<List<Order>> getOrders() {
+    if (kIsWeb) return Stream.value([]);
+    return Stream.fromFuture(
+      _database
+          .query('orders', orderBy: 'id DESC')
+          .then((rows) => rows.map(_rowToOrder).toList()),
+    );
+  }
 
   @override
-   Future<void> saveOrder(Order order) async {
-     await _database.insert(
-       'orders',
-       _orderToRow(order),
-       conflictAlgorithm: ConflictAlgorithm.replace,
+  Future<void> saveOrder(Order order) async {
+    if (kIsWeb) return;
+    await _database.insert(
+      'orders',
+      _orderToRow(order),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
-   }
+  }
+
 
   Map<String, dynamic> _orderToRow(Order order) {
     final itemsJson = jsonEncode(
-       order.items.map((item) {
-        return serializers.serializeWith(
-          CartItem.serializer,
-           item,
-         );
-}).toList(),
-   );
-
-   return {
+      order.items.map((item) {
+        return serializers.serializeWith(CartItem.serializer, item);
+      }).toList(),
+    );
+    return {
       'id': order.id,
-     'restaurant_name': order.restaurantName,
-  'items_json': itemsJson,
+      'restaurant_name': order.restaurantName,
+      'items_json': itemsJson,
       'total_amount': order.totalAmount,
-     'status': order.status,
-     'placed_at': order.placedAt.toIso8601String(),
+      'status': order.status,
+      'placed_at': order.placedAt.toIso8601String(),
       'delivery_address': order.deliveryAddress,
-     };
-   }
+    };
+  }
 
-   Order _rowToOrder(Map<String, dynamic> row) {
-     // Decode JSON string from database
-     final itemsRaw = jsonDecode(row['items_json'] as String) as List;
-
-  // Convert each JSON map → CartItem using serializer
+  Order _rowToOrder(Map<String, dynamic> row) {
+    final itemsRaw = jsonDecode(row['items_json'] as String) as List;
     final items = itemsRaw.map((itemJson) {
-      return serializers.deserializeWith(
-         CartItem.serializer,
-        itemJson,
-      )!;
-     }).toList();
-  // Build Order object
+      return serializers.deserializeWith(CartItem.serializer, itemJson)!;
+    }).toList();
     return Order((b) => b
       ..id = row['id'] as int
       ..restaurantName = row['restaurant_name'] as String
-     ..items.replace(items)
-       ..totalAmount = (row['total_amount'] as num).toDouble()
-       ..status = row['status'] as String
-       ..placedAt = DateTime.parse(row['placed_at'] as String)
+      ..items.replace(items)
+      ..totalAmount = (row['total_amount'] as num).toDouble()
+      ..status = row['status'] as String
+      ..placedAt = DateTime.parse(row['placed_at'] as String)
       ..deliveryAddress = row['delivery_address'] as String);
-   }
+  }
 
   Map<String, dynamic> _restaurantToRow(Restaurant r) {
-    final json = serializers.serializeWith(
-      Restaurant.serializer,
-      r,
-    ) as Map<String, dynamic>;
-
-    // serializer gives isOpen as bool, SQLite needs int
-    return {
-      ...json,
-      'isOpen': r.isOpen ? 1 : 0,
-    };
+    final json = serializers.serializeWith(Restaurant.serializer, r)
+    as Map<String, dynamic>;
+    return {...json, 'isOpen': r.isOpen ? 1 : 0};
   }
 
   Restaurant _rowToRestaurant(Map<String, dynamic> row) {
-    // isOpen stored as int in SQLite, serializer needs bool
-    final normalizedRow = {
-      ...row,
-      'isOpen': (row['isOpen'] as int) == 1,
-    };
-
-    return serializers.deserializeWith(
-      Restaurant.serializer,
-      normalizedRow,
-    )!;
+    final normalizedRow = {...row, 'isOpen': (row['isOpen'] as int) == 1};
+    return serializers.deserializeWith(Restaurant.serializer, normalizedRow)!;
   }
 
   Map<String, dynamic> _foodItemToRow(FoodItem item) {
-    final json = serializers.serializeWith(
-      FoodItem.serializer,
-      item,
-    ) as Map<String, dynamic>;
-
-    // serializer gives isAvailable as bool, SQLite needs int
-    return {
-      ...json,
-      'isAvailable': item.isAvailable ? 1 : 0,
-    };
+    final json = serializers.serializeWith(FoodItem.serializer, item)
+    as Map<String, dynamic>;
+    return {...json, 'isAvailable': item.isAvailable ? 1 : 0};
   }
 
   FoodItem _rowToFoodItem(Map<String, dynamic> row) {
-    // isAvailable stored as int in SQLite, serializer needs bool
     final normalizedRow = {
       ...row,
-      'isAvailable': (row['isAvailable'] as int) == 1,
+      'isAvailable': (row['isAvailable'] as int) == 1
     };
-
-    return serializers.deserializeWith(
-      FoodItem.serializer,
-      normalizedRow,
-    )!;
+    return serializers.deserializeWith(FoodItem.serializer, normalizedRow)!;
   }
 
   Map<String, dynamic> _cartItemToRow(CartItem item) {
-    return serializers.serializeWith(
-      CartItem.serializer,
-      item,
-    ) as Map<String, dynamic>;
+    return serializers.serializeWith(CartItem.serializer, item)
+    as Map<String, dynamic>;
   }
 
   CartItem _rowToCartItem(Map<String, dynamic> row) {
-    return serializers.deserializeWith(
-      CartItem.serializer,
-      row,
-    )!;
+    return serializers.deserializeWith(CartItem.serializer, row)!;
   }
 }
-

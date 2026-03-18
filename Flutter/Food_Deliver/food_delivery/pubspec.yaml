@@ -29,6 +29,10 @@ dependencies:
   cloud_firestore: ^6.1.3
   intl: ^0.20.2
   async: ^2.13.0
+  patrol_cli: ^4.2.0
+  sqflite_common_ffi_web: ^1.1.1
+
+
 
 dev_dependencies:
   flutter_test:
@@ -39,6 +43,11 @@ dev_dependencies:
   built_value_generator: ^8.9.2
   riverpod_generator: ^2.6.1
   flutter_lints: ^3.0.0
+  patrol: ^4.3.0
 
+patrol:
+  app_name: food_delivery
+  android:
+    package: com.example.foodDelivery
 flutter:
   uses-material-design: true

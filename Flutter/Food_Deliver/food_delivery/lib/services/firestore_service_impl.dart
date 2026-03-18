@@ -10,7 +10,7 @@ import 'package:food_delivery/model/serializers.dart';
 
 
 
-class FirestoreServiceImpl implements LocalStorageService{
+class FirestoreServiceImpl implements StorageService{
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final CollectionReference usersCollection =

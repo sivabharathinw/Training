@@ -7,6 +7,7 @@ import '../viewmodel/view_model.dart';
 import 'menu_screen.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
+
 class RestaurantListScreen extends ConsumerWidget {
   const RestaurantListScreen({super.key});
 
@@ -15,6 +16,8 @@ class RestaurantListScreen extends ConsumerWidget {
     final appState = ref.appState;
     final appNotifier = ref.appNotifier;
     final totalCount = appState.itemCount;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWeb = screenWidth > 600;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -34,6 +37,7 @@ class RestaurantListScreen extends ConsumerWidget {
           Stack(
             children: [
               IconButton(
+                key: const Key('cart'),
                 icon: const Icon(Icons.shopping_cart_outlined),
                 onPressed: () => GoRouter.of(context).push('/cart'),
               ),
@@ -55,6 +59,7 @@ class RestaurantListScreen extends ConsumerWidget {
             ],
           ),
           IconButton(
+            key: const Key('orders'),
             icon: const Icon(Icons.receipt_long_outlined),
             onPressed: () => GoRouter.of(context).push('/orders'),
           ),
@@ -62,30 +67,40 @@ class RestaurantListScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
+          // ── Search bar ──
           Container(
             color: const Color(0xFFFF6B35),
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            child: TextField(
-              onChanged: (value) => appNotifier.updateSearch(value),
-              decoration: InputDecoration(
-                hintText: 'Search restaurants or cuisine...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxWidth: isWeb ? 700 : double.infinity),
+                child: TextField(
+                  key: const Key('search'),
+                  onChanged: (value) => appNotifier.updateSearch(value),
+                  decoration: InputDecoration(
+                    hintText: 'Search restaurants or cuisine...',
+                    prefixIcon:
+                    const Icon(Icons.search, color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.zero,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
+
+          // ── Restaurant List ──
           Expanded(
             child: appState.restaurants.isEmpty
                 ? const Center(
-              child: CircularProgressIndicator(
-                  color: Color(0xFFFF6B35)),
-            )
+                child: CircularProgressIndicator(
+                    color: Color(0xFFFF6B35)))
                 : appNotifier.filteredRestaurants.isEmpty
                 ? Center(
               child: Column(
@@ -103,11 +118,35 @@ class RestaurantListScreen extends ConsumerWidget {
                 ],
               ),
             )
+                : isWeb
+            // ── WEB: 3 column grid ──
+                ? GridView.builder(
+              padding: const EdgeInsets.all(20),
+              gridDelegate:
+              const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.0, // square cards
+              ),
+              itemCount:
+              appNotifier.filteredRestaurants.length,
+              itemBuilder: (ctx, i) => _RestaurantCard(
+                key: Key('restaurant_$i'),
+                restaurant:
+                appNotifier.filteredRestaurants[i],
+              ),
+            )
+            // ── MOBILE: normal list ──
                 : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: appNotifier.filteredRestaurants.length,
+              itemCount:
+              appNotifier.filteredRestaurants.length,
               itemBuilder: (ctx, i) => _RestaurantCard(
-                  restaurant: appNotifier.filteredRestaurants[i]),
+                key: Key('restaurant_$i'),
+                restaurant:
+                appNotifier.filteredRestaurants[i],
+              ),
             ),
           ),
         ],
@@ -118,16 +157,19 @@ class RestaurantListScreen extends ConsumerWidget {
 
 class _RestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
-  const _RestaurantCard({required this.restaurant});
+
+  const _RestaurantCard({super.key, required this.restaurant});
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWeb = screenWidth > 600;
+
     return GestureDetector(
       onTap: restaurant.isOpen
-          ? () => GoRouter.of(context).push('/menu', extra: restaurant)//here pass the rest as a extra params
+          ? () => GoRouter.of(context).push('/menu', extra: restaurant)
           : null,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -141,82 +183,102 @@ class _RestaurantCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Restaurant image + closed overlay
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.network(
-                    restaurant.imageUrl,
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                        height: 160,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.restaurant,
-                            size: 60, color: Colors.grey)),
-                  ),
-                ),
-                if (!restaurant.isOpen)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(16))),
-                      child: const Center(
-                        child: Text('CLOSED',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                letterSpacing: 2)),
+            // ── Image takes 65% of card height ──
+            Expanded(
+              flex: 65,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16)),
+                    child: SizedBox.expand( // fills exactly its flex space
+                      child: Image.network(
+                        restaurant.imageUrl,
+                        fit: BoxFit.cover, //  covers without distorting
+                        errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.restaurant,
+                                size: 48, color: Colors.grey)),
                       ),
                     ),
                   ),
-              ],
+                  if (!restaurant.isOpen)
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                        child: Container(
+                          color: Colors.black54,
+                          child: const Center(
+                            child: Text('CLOSED',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    letterSpacing: 2)),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
 
-
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(restaurant.name,
-                          style: const TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold)),
-                      Row(children: [
-                        const Icon(Icons.star,
-                            size: 16, color: Color(0xFFFFB300)),
-                        const SizedBox(width: 3),
-                        Text(restaurant.rating.toString(),
-                            style:
-                            const TextStyle(fontWeight: FontWeight.w600)),
-                      ]),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(restaurant.cuisine,
-                      style:
-                      TextStyle(color: Colors.grey[600], fontSize: 13)),
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    _InfoChip(icon: Icons.access_time, label: restaurant.deliveryTime),
-                    const SizedBox(width: 10),
-                    _InfoChip(
-                      icon: Icons.delivery_dining,
-                      label: restaurant.deliveryFee == 0
-                          ? 'Free delivery'
-                          : '₹${restaurant.deliveryFee.toStringAsFixed(0)} delivery',
+            // ── Info takes 35% of card height ──
+            Expanded(
+              flex: 35,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            restaurant.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: isWeb ? 13 : 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Row(children: [
+                          const Icon(Icons.star,
+                              size: 13, color: Color(0xFFFFB300)),
+                          const SizedBox(width: 2),
+                          Text(restaurant.rating.toString(),
+                              style: TextStyle(
+                                  fontSize: isWeb ? 11 : 13,
+                                  fontWeight: FontWeight.w600)),
+                        ]),
+                      ],
                     ),
-                  ]),
-                ],
+                    Text(
+                      restaurant.cuisine,
+                      style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: isWeb ? 11 : 13),
+                    ),
+                    Row(children: [
+                      _InfoChip(
+                          icon: Icons.access_time,
+                          label: restaurant.deliveryTime,
+                          isWeb: isWeb),
+                      const SizedBox(width: 8),
+                      _InfoChip(
+                        icon: Icons.delivery_dining,
+                        label: restaurant.deliveryFee == 0
+                            ? 'Free'
+                            : '₹${restaurant.deliveryFee.toStringAsFixed(0)}',
+                        isWeb: isWeb,
+                      ),
+                    ]),
+                  ],
+                ),
               ),
             ),
           ],
@@ -229,14 +291,18 @@ class _RestaurantCard extends StatelessWidget {
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _InfoChip({required this.icon, required this.label});
+  final bool isWeb;
+  const _InfoChip(
+      {required this.icon, required this.label, required this.isWeb});
 
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Icon(icon, size: 14, color: Colors.grey[500]),
-      const SizedBox(width: 4),
-      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      Icon(icon, size: 12, color: Colors.grey[500]),
+      const SizedBox(width: 3),
+      Text(label,
+          style: TextStyle(
+              fontSize: isWeb ? 10 : 12, color: Colors.grey[600])),
     ]);
   }
 }

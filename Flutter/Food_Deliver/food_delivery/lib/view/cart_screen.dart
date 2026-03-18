@@ -55,6 +55,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
           actions: [
             TextButton(
+              key: const Key('view_orders_button'),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
@@ -64,10 +65,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         ),
       );
 
-      // This runs after dialog is dismissed
       if (!mounted) return;
       context.push('/orders');
-
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,6 +131,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               itemBuilder: (ctx, i) {
                 final item = cartItems[i];
                 return Container(
+                  key: Key('cart_item_$i'),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -202,6 +202,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                   Row(
                                     children: [
                                       _QtyButton(
+                                        key: Key('decrease_$i'),
                                         icon: Icons.remove,
                                         onTap: () => appNotifier
                                             .decreaseQuantity(item),
@@ -220,12 +221,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                         ),
                                       ),
                                       _QtyButton(
+                                        key: Key('increase_$i'),
                                         icon: Icons.add,
                                         onTap: () => appNotifier
                                             .increaseQuantity(item),
                                       ),
                                       const SizedBox(width: 8),
                                       GestureDetector(
+                                        key: Key('delete_$i'),
                                         onTap: () => appNotifier
                                             .removeItem(item.id),
                                         child: const Icon(
@@ -264,7 +267,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               children: [
                 _BillRow(
                   label: 'Subtotal',
-                  value: '₹${appState.totalPrice.toStringAsFixed(0)}',
+                  value:
+                  '₹${appState.totalPrice.toStringAsFixed(0)}',
                 ),
                 const SizedBox(height: 6),
                 _BillRow(
@@ -282,13 +286,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    key: const Key('place_order'),
                     onPressed:
                     _isPlacingOrder ? null : _placeOrder,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B35),
                       foregroundColor: Colors.white,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -315,7 +320,7 @@ class _QtyButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _QtyButton({required this.icon, required this.onTap});
+  const _QtyButton({super.key, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -35,9 +35,9 @@ class AppNotifier extends StateNotifier<AppState> {
     await repository.auth.logout();
   }
   Future<void> addUser({required String name, required String email}) async {
-    await repository.firestore.addUser(name: name, email: email);
+    await repository.storage.addUser(name: name, email: email);
   }
-  get _storage => repository.localStorageServiceProvider;
+  get _storage => repository.storage;
 
 
   AppNotifier(this.repository) : super(AppState((b) => b
@@ -75,11 +75,11 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 
   Future<void> _loadRestaurants() async {
-    final existing = await repository.firestore.getRestaurants();
+    final existing = await repository.storage.getRestaurants();
 
       if(existing.isEmpty) {
-        await repository.firestore.insertAllRestaurants(_sampleRestaurants);
-        await repository.firestore.insertAllFoodItems(_sampleFoodItems);
+        await repository.storage.insertAllRestaurants(_sampleRestaurants);
+        await repository.storage.insertAllFoodItems(_sampleFoodItems);
         _updateState(restaurants: _sampleRestaurants);
       } else {
         _updateState(restaurants: existing);
@@ -88,12 +88,12 @@ class AppNotifier extends StateNotifier<AppState> {
 
 
   Future<void> loadMenuItems(int restaurantId) async {
-    final items = await repository.firestore.getFoodItems(restaurantId);
+    final items = await repository.storage.getFoodItems(restaurantId);
     _updateState(menuItems: items);
   }
 
   Future<void> _loadCart() async {
-    final items = await repository.firestore.getCartItems();
+    final items = await repository.storage.getCartItems();
     _updateState(cartItems: items);
   }
 
@@ -108,34 +108,34 @@ class AppNotifier extends StateNotifier<AppState> {
       ..restaurantId = restaurant.id
       ..restaurantName = restaurant.name);
 
-    await repository.firestore.addCartItem(cartItem);
+    await repository.storage.addCartItem(cartItem);
     await _loadCart();
   }
 
   Future<void> increaseQuantity(CartItem item) async {
-    await repository.firestore.updateCartItemQuantity(item.id, item.quantity + 1);
+    await repository.storage.updateCartItemQuantity(item.id, item.quantity + 1);
     await _loadCart();
   }
 
   Future<void> decreaseQuantity(CartItem item) async {
     if (item.quantity <= 1) {
-      await repository.firestore.removeCartItem(item.id);
+      await repository.storage.removeCartItem(item.id);
     } else {
-      await repository.firestore.updateCartItemQuantity(item.id, item.quantity - 1);
+      await repository.storage.updateCartItemQuantity(item.id, item.quantity - 1);
     }
     await _loadCart();
   }
   Future<void> addToCart(CartItem item) async {
-    await repository.firestore.addCartItem(item);
+    await repository.storage.addCartItem(item);
   }
 
   Future<void> removeItem(int cartItemId) async {
-    await repository.firestore.removeCartItem(cartItemId);
+    await repository.storage.removeCartItem(cartItemId);
     await _loadCart();
   }
 
   Future<void> clearCart() async {
-    await repository.firestore.clearCart();
+    await repository.storage.clearCart();
     _updateState(cartItems: []);
   }
 
@@ -150,7 +150,7 @@ class AppNotifier extends StateNotifier<AppState> {
       as Map<String, dynamic>;
     }).toList();
 
-    return repository.firestore.placeOrder(
+    return repository.storage.placeOrder(
       items: itemsData,
       totalAmount: totalAmount,
       deliveryAddress: deliveryAddress,
@@ -169,7 +169,7 @@ class AppNotifier extends StateNotifier<AppState> {
 
   void _loadOrders() {
     _ordersSubscription?.cancel();
-    _ordersSubscription = repository.firestore.getOrders().listen((orders) {
+    _ordersSubscription = repository.storage.getOrders().listen((orders) {
       _updateState(orders: orders);
     });
   }

@@ -57,8 +57,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final error = await _repository.auth.signUp(email, password);
 
     if (error == null) {
-      //store into firestore
-      await _repository.firestore.addUser(
+      await _repository.storage.addUser(
         name: name,
         email: email,
       );
@@ -97,41 +96,39 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 50),
             CustomTextField(
+              key: const Key('name'),
               controller: nameController,
               label: 'Name',
               enabled: !isLoading,
             ),
             const SizedBox(height: 16),
-
-            // Email
             CustomTextField(
+              key: const Key('signup_email'),
               controller: emailController,
               label: 'Email',
               enabled: !isLoading,
             ),
             const SizedBox(height: 16),
-
-            // Password
             CustomTextField(
+              key: const Key('signup_password'),
               controller: passwordController,
               label: 'Password',
               obscureText: true,
               enabled: !isLoading,
             ),
             const SizedBox(height: 16),
-
-            // Confirm Password
             CustomTextField(
+              key: const Key('confirm_password'),
               controller: confirmPasswordController,
               label: 'Confirm Password',
               obscureText: true,
               enabled: !isLoading,
             ),
             const SizedBox(height: 24),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                key: const Key('signupButton'),
                 onPressed: isLoading ? null : signup,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -140,10 +137,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Sign Up'),
               ),
-            ) ,
-
+            ),
             const SizedBox(height: 16),
-
             GestureDetector(
               onTap: isLoading ? null : () => context.push('/login'),
               child: RichText(
