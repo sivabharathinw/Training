@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.vibrate_plugin">
+    //ask android for persmisson to vibrate the phone
+
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
+</manifest>

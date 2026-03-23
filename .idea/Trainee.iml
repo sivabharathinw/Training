@@ -45,6 +45,12 @@
       <excludeFolder url="file://$MODULE_DIR$/Flutter/counter_test/counter/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/Flutter/counter_test/counter/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/Flutter/counter_test/counter/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/vibrate_plugin/my_vibration_plugin/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/vibrate_plugin/my_vibration_plugin/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/vibrate_plugin/my_vibration_plugin/build" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/vibrate_plugin/my_vibration_plugin/example/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/vibrate_plugin/my_vibration_plugin/example/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/Flutter/vibrate_plugin/my_vibration_plugin/example/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
