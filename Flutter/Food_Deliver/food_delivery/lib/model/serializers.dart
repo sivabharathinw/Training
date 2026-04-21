@@ -9,6 +9,7 @@ import 'restaurant.dart';
 import 'food_item.dart';
 import 'cart_item.dart';
 import 'order.dart';
+import 'user_profile.dart';
 
 part 'serializers.g.dart';
 
@@ -17,6 +18,7 @@ part 'serializers.g.dart';
   FoodItem,
   CartItem,
   Order,
+  UserProfile,
   AppState
 ])
 final Serializers serializers = (_$serializers.toBuilder()

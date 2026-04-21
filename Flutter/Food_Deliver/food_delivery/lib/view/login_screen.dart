@@ -4,6 +4,7 @@ import 'signup_screen.dart';
 import 'restaurant_list_screen.dart';
 import '../view/widgets/custom_text_field.dart';
 import 'package:go_router/go_router.dart';
+import 'package:appwrite/appwrite.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,29 +30,29 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill all fields')),
-        );
-      }
-      return;
-    }
-
     setState(() => isLoading = true);
 
-    final error = await _repository.auth.login(email, password);
-
-    setState(() => isLoading = false);
-
-    if (!mounted) return;
-
-    if (error == null) {
-      GoRouter.of(context).push('/restaurants');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+    try {
+      await _repository.auth.login(email, password);
+      if (mounted) {
+        GoRouter.of(context).push('/restaurants');
+      }
+    } on AppwriteException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Login failed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An unexpected error occurred: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -96,12 +97,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: isLoading ? null : login,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFFFF6B35),
+                  foregroundColor: Colors.white,
                 ),
                 child: isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Login'),
               ),
             ),
+            const SizedBox(height: 16),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: isLoading ? null : () => context.push('/signup'),
@@ -110,9 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   text: "Don't have an account? ",
                   style: const TextStyle(color: Colors.black),
                   children: [
-                    TextSpan(
+                    const TextSpan(
                       text: 'Sign up',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFFF6B35),
                         fontWeight: FontWeight.bold,
                       ),

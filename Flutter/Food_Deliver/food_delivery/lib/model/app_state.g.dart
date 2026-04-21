@@ -17,6 +17,8 @@ class _$AppState extends AppState {
   final BuiltList<Order> orders;
   @override
   final String searchQuery;
+  @override
+  final UserProfile? currentUser;
 
   factory _$AppState([void Function(AppStateBuilder)? updates]) =>
       (AppStateBuilder()..update(updates))._build();
@@ -26,7 +28,8 @@ class _$AppState extends AppState {
       required this.menuItems,
       required this.cartItems,
       required this.orders,
-      required this.searchQuery})
+      required this.searchQuery,
+      this.currentUser})
       : super._();
   @override
   AppState rebuild(void Function(AppStateBuilder) updates) =>
@@ -43,7 +46,8 @@ class _$AppState extends AppState {
         menuItems == other.menuItems &&
         cartItems == other.cartItems &&
         orders == other.orders &&
-        searchQuery == other.searchQuery;
+        searchQuery == other.searchQuery &&
+        currentUser == other.currentUser;
   }
 
   @override
@@ -54,6 +58,7 @@ class _$AppState extends AppState {
     _$hash = $jc(_$hash, cartItems.hashCode);
     _$hash = $jc(_$hash, orders.hashCode);
     _$hash = $jc(_$hash, searchQuery.hashCode);
+    _$hash = $jc(_$hash, currentUser.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -65,7 +70,8 @@ class _$AppState extends AppState {
           ..add('menuItems', menuItems)
           ..add('cartItems', cartItems)
           ..add('orders', orders)
-          ..add('searchQuery', searchQuery))
+          ..add('searchQuery', searchQuery)
+          ..add('currentUser', currentUser))
         .toString();
   }
 }
@@ -99,6 +105,12 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
   String? get searchQuery => _$this._searchQuery;
   set searchQuery(String? searchQuery) => _$this._searchQuery = searchQuery;
 
+  UserProfileBuilder? _currentUser;
+  UserProfileBuilder get currentUser =>
+      _$this._currentUser ??= UserProfileBuilder();
+  set currentUser(UserProfileBuilder? currentUser) =>
+      _$this._currentUser = currentUser;
+
   AppStateBuilder();
 
   AppStateBuilder get _$this {
@@ -109,6 +121,7 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
       _cartItems = $v.cartItems.toBuilder();
       _orders = $v.orders.toBuilder();
       _searchQuery = $v.searchQuery;
+      _currentUser = $v.currentUser?.toBuilder();
       _$v = null;
     }
     return this;
@@ -138,6 +151,7 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
             orders: orders.build(),
             searchQuery: BuiltValueNullFieldError.checkNotNull(
                 searchQuery, r'AppState', 'searchQuery'),
+            currentUser: _currentUser?.build(),
           );
     } catch (_) {
       late String _$failedField;
@@ -150,6 +164,9 @@ class AppStateBuilder implements Builder<AppState, AppStateBuilder> {
         cartItems.build();
         _$failedField = 'orders';
         orders.build();
+
+        _$failedField = 'currentUser';
+        _currentUser?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
             r'AppState', _$failedField, e.toString());

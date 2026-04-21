@@ -11,6 +11,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(FoodItem.serializer)
       ..add(Order.serializer)
       ..add(Restaurant.serializer)
+      ..add(UserProfile.serializer)
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(CartItem)]),
           () => ListBuilder<CartItem>()))

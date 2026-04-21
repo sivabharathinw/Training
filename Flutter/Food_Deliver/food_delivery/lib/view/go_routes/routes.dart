@@ -6,6 +6,8 @@ import 'package:food_delivery/view/restaurant_list_screen.dart';
 import 'package:food_delivery/view/menu_screen.dart';
 import 'package:food_delivery/view/cart_screen.dart';
 import 'package:food_delivery/view/orders_screen.dart';
+import 'package:food_delivery/view/profile_screen.dart';
+
 import 'package:food_delivery/model/restaurant.dart';
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
@@ -37,6 +39,10 @@ GoRoute(
 path: '/orders',
 builder: (context, state) => const OrdersScreen(),
 ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
+    ),
 
   ],
 );

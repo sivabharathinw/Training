@@ -33,6 +33,17 @@ Future<void> init() async {
   }
 
   @override
+  Future<Map<String, dynamic>?> getUser(String userId) async {
+    final doc = await usersCollection.doc(userId).get();
+    return doc.data() as Map<String, dynamic>?;
+  }
+
+  @override
+  Future<void> updateUser(String userId, Map<String, dynamic> data) {
+    return usersCollection.doc(userId).update(data);
+  }
+
+  @override
   Future<void> placeOrder({
     required List<Map<String, dynamic>> items,
     required double totalAmount,

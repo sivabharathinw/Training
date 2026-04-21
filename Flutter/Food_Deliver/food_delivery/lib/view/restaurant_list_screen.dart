@@ -34,6 +34,11 @@ class RestaurantListScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            key: const Key('profile'),
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => GoRouter.of(context).push('/profile'),
+          ),
           Stack(
             children: [
               IconButton(
@@ -119,7 +124,7 @@ class RestaurantListScreen extends ConsumerWidget {
               ),
             )
                 : isWeb
-            // ── WEB: 3 column grid ──
+            // ── WEB: 3 column grid 
                 ? GridView.builder(
               padding: const EdgeInsets.all(20),
               gridDelegate:
@@ -183,7 +188,6 @@ class _RestaurantCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image takes 65% of card height ──
             Expanded(
               flex: 65,
               child: Stack(

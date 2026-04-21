@@ -1,6 +1,7 @@
 
 abstract class AuthenticationService {
-  Future<String?> signUp(String email, String password);
-  Future<String?> login(String email, String password);
+  Future<void> signUp(String email, String password, {String? name});
+  Future<void> login(String email, String password);
   Future<void> logout();
+  Future<Map<String, String>?> getCurrentUser();
 }

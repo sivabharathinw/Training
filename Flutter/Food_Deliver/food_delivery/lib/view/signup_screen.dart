@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repository/app_repository.dart';
 import '../view/widgets/custom_text_field.dart';
 import 'package:go_router/go_router.dart';
+import 'package:appwrite/appwrite.dart';
+import '../viewmodel/view_model.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
   bool isLoading = false;
-
-  final AppRepository _repository = AppRepository();
 
   @override
   void dispose() {
@@ -54,26 +55,27 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => isLoading = true);
 
-    final error = await _repository.auth.signUp(email, password);
-
-    if (error == null) {
-      await _repository.storage.addUser(
-        name: name,
-        email: email,
-      );
-
+    try {
+      final success = await ref.read(appProvider.notifier).signUp(email, password, name);
+      
       if (!mounted) return;
-
-      context.push('/login');
-    } else {
+      if (success) {
+        context.go('/restaurants');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Signup failed. Please try again.')),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
+        SnackBar(content: Text('An unexpected error occurred: $e')),
       );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
-
-    setState(() => isLoading = false);
   }
 
   @override

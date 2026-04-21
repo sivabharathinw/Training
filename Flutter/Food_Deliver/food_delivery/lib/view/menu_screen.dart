@@ -41,7 +41,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
 
-      // ── Simple AppBar — no image inside ──
+
       appBar: AppBar(
         backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
@@ -85,13 +85,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // ── Restaurant image — simple AspectRatio, no clipping ──
+
                 AspectRatio(
-                  aspectRatio: 16 / 7, // ✅ wide banner shape — full image visible
+                  aspectRatio: 16 / 7,
                   child: Image.network(
                     widget.restaurant.imageUrl,
                     width: double.infinity,
-                    fit: BoxFit.cover,     // ✅ fills width perfectly
+                    fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFFFF6B35),
                       child: const Icon(Icons.restaurant,
@@ -195,7 +195,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),
-            onPressed: () => context.push('/cart'),
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              context.push('/cart');
+            },
             child: Text(
               'View Cart (${appState.itemCount} items) • ₹${appState.totalPrice.toStringAsFixed(0)}',
               style: const TextStyle(

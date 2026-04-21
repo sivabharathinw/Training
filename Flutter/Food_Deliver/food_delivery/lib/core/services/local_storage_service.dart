@@ -41,4 +41,8 @@ abstract class StorageService {
     required String name,
     required String email,
   });
+
+  Future<Map<String, dynamic>?> getUser(String userId);
+
+  Future<void> updateUser(String userId, Map<String, dynamic> data);
 }

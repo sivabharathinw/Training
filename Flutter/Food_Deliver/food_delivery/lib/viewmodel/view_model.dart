@@ -9,31 +9,48 @@ import '../model/app_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:food_delivery/model/serializers.dart';
 import 'dart:async';//for streams
+import 'dart:io';
+import '../model/user_profile.dart';
 final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
   final repo = AppRepository();
   return AppNotifier(repo);
 });
 
-class AppNotifier extends StateNotifier<AppState> {
-  //StreamSubscription is a connection between app and stream it can listen the streams ,pasuse and cancel the streams
-
-  StreamSubscription? _ordersSubscription;
-
-  final AppRepository repository;
-
-  Future<bool> login(String email, String password) async {
-    final error = await repository.auth.login(email, password);
-
-    return error == null;
-  }
-  Future<bool> signUp(String email, String password) async {
-    final error = await repository.auth.signUp(email, password);
-
-    return error==null;
-  }
+  class AppNotifier extends StateNotifier<AppState> {
+    //StreamSubscription is a connection between app and stream it can listen the streams ,pasuse and cancel the streams
+  
+    StreamSubscription? _ordersSubscription;
+  
+    final AppRepository repository;
+  
+    Future<bool> login(String email, String password) async {
+      try {
+        await repository.auth.login(email, password);
+        return true;
+      } catch (e) {
+        print('Login error in VM: $e');
+        return false;
+      }
+    }
+    Future<bool> signUp(String email, String password, String name) async {
+      try {
+        await repository.auth.signUp(email, password);
+        // We might need to wait for session in some auth implementations
+        final user = await repository.auth.getCurrentUser();
+        if (user != null) {
+          await repository.storage.addUser(name: name, email: email);
+        }
+        return true;
+      } catch (e) {
+        print('Signup error in VM: $e');
+        return false;
+      }
+    }
   Future<void> logout() async {
     await repository.auth.logout();
+    _updateState(currentUser: null);
   }
+
   Future<void> addUser({required String name, required String email}) async {
     await repository.storage.addUser(name: name, email: email);
   }
@@ -51,6 +68,7 @@ class AppNotifier extends StateNotifier<AppState> {
 
   Future<void> _init() async {
     await repository.init();
+    await loadUserProfile();
     await _loadRestaurants();
     await _loadCart();
     _loadOrders();
@@ -63,6 +81,7 @@ class AppNotifier extends StateNotifier<AppState> {
     List<CartItem>? cartItems,
     List<Order>? orders,
     String? searchQuery,
+    UserProfile? currentUser,
   }) {
     //state is immutable, so we need to rebuild it with the new values. We only update the fields that are provided, leaving the others unchanged.
     state = state.rebuild((b) {
@@ -71,25 +90,85 @@ class AppNotifier extends StateNotifier<AppState> {
       if (cartItems != null) b.cartItems = ListBuilder(cartItems);
       if (orders != null) b.orders = ListBuilder(orders);
       if (searchQuery != null) b.searchQuery = searchQuery;
+      if (currentUser != null) b.currentUser = currentUser.toBuilder();
     });
   }
 
+  Future<void> loadUserProfile() async {
+    try {
+      final user = await repository.auth.getCurrentUser();
+      if (user != null) {
+        final userId = user['id']!;
+        
+        // Try to get user from DB
+        var dbUser = await repository.storage.getUser(userId);
+        
+        if (dbUser == null) {
+          // If missing in DB, create it
+          await repository.storage.addUser(name: user['name'] ?? 'User', email: user['email']!);
+          dbUser = await repository.storage.getUser(userId);
+        }
+        
+        final profile = UserProfile((b) => b
+          ..id = userId
+          ..name = dbUser?['name'] ?? user['name']!
+          ..email = dbUser?['email'] ?? user['email']!
+          ..profilePictureId = dbUser?['profilePictureId'] as String?);
+        
+        _updateState(currentUser: profile);
+      }
+    } catch (e) {
+      print('Load User Profile Error: $e');
+    }
+  }
+
+  Future<void> uploadProfilePicture(File image) async {
+    final user = state.currentUser;
+    if (user == null) return;
+
+    try {
+      final fileId = await repository.files.uploadFile(image);
+      if (fileId != null) {
+        final updatedUser = user.rebuild((b) => b..profilePictureId = fileId);
+        _updateState(currentUser: updatedUser);
+        
+        // Persist change to DB
+        await repository.storage.updateUser(user.id, {
+          'profilePictureId': fileId,
+        });
+      }
+    } catch (e) {
+      print('Upload Profile Picture Error: $e');
+    }
+  }
+
+  String getProfileImageUrl() {
+    if (state.currentUser?.profilePictureId == null) return '';
+    return repository.files.getFilePreviewUrl(state.currentUser!.profilePictureId!);
+  }
   Future<void> _loadRestaurants() async {
     final existing = await repository.storage.getRestaurants();
 
-      if(existing.isEmpty) {
-        await repository.storage.insertAllRestaurants(_sampleRestaurants);
-        await repository.storage.insertAllFoodItems(_sampleFoodItems);
-        _updateState(restaurants: _sampleRestaurants);
-      } else {
-        _updateState(restaurants: existing);
-      }
+    if(existing.isEmpty) {
+      await repository.storage.insertAllRestaurants(_sampleRestaurants);
+      await repository.storage.insertAllFoodItems(_sampleFoodItems);
+      _updateState(restaurants: _sampleRestaurants);
+    } else {
+      _updateState(restaurants: existing);
+    }
   }
 
 
   Future<void> loadMenuItems(int restaurantId) async {
     final items = await repository.storage.getFoodItems(restaurantId);
-    _updateState(menuItems: items);
+
+    if (items.isEmpty) {
+      // Fallback to sample items if DB is empty
+      final sampleItems = _sampleFoodItems.where((i) => i.restaurantId == restaurantId).toList();
+      _updateState(menuItems: sampleItems);
+    } else {
+      _updateState(menuItems: items);
+    }
   }
 
   Future<void> _loadCart() async {
@@ -99,7 +178,7 @@ class AppNotifier extends StateNotifier<AppState> {
 
   Future<void> addItem(FoodItem foodItem, Restaurant restaurant) async {
     final cartItem = CartItem((b) => b
-      ..id = 0
+      ..id = DateTime.now().millisecondsSinceEpoch // Use timestamp for unique ID locally
       ..foodItemId = foodItem.id
       ..foodItemName = foodItem.name
       ..price = foodItem.price
@@ -144,17 +223,18 @@ class AppNotifier extends StateNotifier<AppState> {
     required String restaurantName,
     required double totalAmount,
     required String deliveryAddress,
-  }) {
+  }) async {
     final itemsData = cartItems.map((item) {
       return serializers.serializeWith(CartItem.serializer, item)
       as Map<String, dynamic>;
     }).toList();
 
-    return repository.storage.placeOrder(
+    await repository.storage.placeOrder(
       items: itemsData,
       totalAmount: totalAmount,
       deliveryAddress: deliveryAddress,
     );
+    _loadOrders();
   }
   void updateSearch(String query) {
     _updateState(searchQuery: query.toLowerCase());

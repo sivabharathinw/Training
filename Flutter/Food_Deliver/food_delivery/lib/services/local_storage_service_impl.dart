@@ -120,6 +120,44 @@ class LocalStorageServiceImpl implements StorageService {
     );
   }
 
+  @override
+  Future<Map<String, dynamic>?> getUser(String userId) async {
+    if (kIsWeb) return null;
+    try {
+      final rows = await _database.query('users', where: 'email = ?', whereArgs: [userId]);
+      if (rows.isNotEmpty) return rows.first;
+      
+      final id = int.tryParse(userId);
+      if (id != null) {
+        final idRows = await _database.query('users', where: 'id = ?', whereArgs: [id]);
+        if (idRows.isNotEmpty) return idRows.first;
+      }
+    } catch (e) {
+      print(e);
+    }
+    return null;
+  }
+
+  @override
+  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
+    if (kIsWeb) return;
+    try {
+      await _database.update('users', data, where: 'email = ?', whereArgs: [userId]);
+      
+      final id = int.tryParse(userId);
+      if (id != null) {
+        await _database.update('users', data, where: 'id = ?', whereArgs: [id]);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  Future<void> setupDatabase(dynamic adminDb) async {
+    // Local storage does not require administrative database setup
+  }
+
 
   @override
   Future<List<Restaurant>> getRestaurants() async {

@@ -8,6 +8,7 @@ import 'restaurant.dart';
 import 'food_item.dart';
 import 'cart_item.dart';
 import 'order.dart';
+import 'user_profile.dart';
 
 part 'app_state.g.dart';
 
@@ -17,6 +18,7 @@ abstract class AppState implements Built<AppState, AppStateBuilder> {
   BuiltList<CartItem> get cartItems;
   BuiltList<Order> get orders;
   String get searchQuery;
+  UserProfile? get currentUser;
 
   double get totalPrice =>
       cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
