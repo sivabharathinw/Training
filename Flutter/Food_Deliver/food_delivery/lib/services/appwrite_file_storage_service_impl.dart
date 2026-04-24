@@ -1,6 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:appwrite/appwrite.dart';
-import '../core/appwrite_config.dart';
+import '../core/services/appwrite_config.dart';
 import '../core/services/appwrite_service.dart';
 import '../core/services/file_storage_service.dart';
 
@@ -14,16 +14,16 @@ class AppwriteFileStorageServiceImpl implements FileStorageService {
   }
 
   @override
-  Future<String?> uploadFile(File file) async {
+  Future<String?> uploadFile(Uint8List bytes, String fileName) async {
     try {
-      print('Starting Appwrite file upload: ${file.path}');
+      print('Starting Appwrite file upload: $fileName');
       final result = await _storage.createFile(
         bucketId: _bucketId,
         fileId: ID.unique(),
-        file: InputFile.fromPath(path: file.path),
-        permissions: [
-          Permission.read(Role.any()),
-        ],
+        file: InputFile.fromBytes(
+          bytes: bytes,
+          filename: fileName,
+        ),
       );
       print('Appwrite file upload successful: ${result.$id}');
       return result.$id;

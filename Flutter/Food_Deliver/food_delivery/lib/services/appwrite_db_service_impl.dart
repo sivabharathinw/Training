@@ -8,7 +8,7 @@ import 'package:appwrite/appwrite.dart';
 //bcZ  admin only strcutre the db and give permsn to the users
 //give alce name  admin to acceess db ,coll bcz to differntiate from the abv package it also have db,collection
 import 'package:dart_appwrite/dart_appwrite.dart' as admin;
-import '../core/appwrite_config.dart';
+import '../core/services/appwrite_config.dart';
 import '../core/services/appwrite_service.dart';
 import '../core/services/local_storage_service.dart';
 import '../model/restaurant.dart';
@@ -450,7 +450,11 @@ class AppwriteAdminSetup {
     try {
       await db.create(databaseId: dId, name: 'Food Delivery');
     } catch (e) {
-      print(e);
+      if (e is admin.AppwriteException && (e.code == 409 || e.code == 403)) {
+        print('Database already exists or quota reached (403), continuing usage...');
+      } else {
+        print('Error creating database: $e');
+      }
     }
 
     final storage = admin.Storage(client);
@@ -465,7 +469,21 @@ class AppwriteAdminSetup {
         fileSecurity: false,
       );
     } catch (e) {
-      print(e);
+      print('Bucket already exists or quota reached: $e');
+      // Try to update permissions of existing bucket
+      try {
+        await storage.updateBucket(
+          bucketId: AppwriteConfig.bucketId,
+          name: 'Food Delivery Bucket',
+          permissions: [
+            admin.Permission.read(admin.Role.any()),
+            admin.Permission.write(admin.Role.users()),
+          ],
+          fileSecurity: false,
+        );
+      } catch (e2) {
+        print('Failed to update bucket permissions: $e2');
+      }
     }
 
     await _setupCollection(db, dId, 'users', 'Users', [
@@ -521,9 +539,38 @@ class AppwriteAdminSetup {
 
   static Future<void> _setupCollection(admin.Databases db, String dbId, String colId, String name, List<_Attr> attrs) async {
     try {
-      await db.createCollection(databaseId: dbId, collectionId: colId, name: name);
+      await db.createCollection(
+        databaseId: dbId, 
+        collectionId: colId, 
+        name: name,
+        permissions: [
+          admin.Permission.read(admin.Role.any()),
+          admin.Permission.write(admin.Role.users()),
+        ],
+      );
     } catch (e) {
-      print(e);
+      if (e is admin.AppwriteException && e.code == 409) {
+        // Silently continue if already exists
+      } else {
+        print('Collection $colId creation error: $e');
+      }
+      
+      // Try to update permissions of existing collection
+      try {
+        await db.updateCollection(
+          databaseId: dbId, 
+          collectionId: colId, 
+          name: name,
+          permissions: [
+            admin.Permission.read(admin.Role.any()),
+            admin.Permission.write(admin.Role.users()),
+          ],
+        );
+      } catch (e2) {
+        if (e2 is! admin.AppwriteException || e2.code != 409) {
+          print('Failed to update collection permissions for $colId: $e2');
+        }
+      }
     }
 
     for (var attr in attrs) {
@@ -543,7 +590,9 @@ class AppwriteAdminSetup {
             break;
         }
       } catch (e) {
-        print(e);
+        if (e is! admin.AppwriteException || e.code != 409) {
+           print('Error creating attribute ${attr.key}: $e');
+        }
       }
     }
   }

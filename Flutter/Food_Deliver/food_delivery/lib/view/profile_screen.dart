@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,13 +12,14 @@ class ProfileScreen extends ConsumerWidget {
     final image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      await ref.appNotifier.uploadProfilePicture(File(image.path));
+      final bytes =await image.readAsBytes();
+      await ref.appNotifier.uploadProfilePicture(bytes, image.name);
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(appProvider);
+    final state = ref.appState;
     final user = state.currentUser;
     final profileImageUrl = ref.appNotifier.getProfileImageUrl();
 
@@ -50,8 +50,8 @@ class ProfileScreen extends ConsumerWidget {
                           : null,
                     ),
                     Positioned(
-                      bottom: 0,
-                      right: 0,
+                     top:0,
+                      bottom :0,
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: const BoxDecoration(
@@ -79,7 +79,6 @@ class ProfileScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Logic for logout or other profile actions
                     ref.appNotifier.logout();
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },

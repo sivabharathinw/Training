@@ -6,11 +6,10 @@ import '../model/food_item.dart';
 import '../model/cart_item.dart';
 import '../model/order.dart';
 import '../model/app_state.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:food_delivery/model/serializers.dart';
 import 'dart:async';//for streams
-import 'dart:io';
 import '../model/user_profile.dart';
+import 'dart:typed_data';
 final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
   final repo = AppRepository();
   return AppNotifier(repo);
@@ -24,27 +23,21 @@ final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
     final AppRepository repository;
   
     Future<bool> login(String email, String password) async {
-      try {
-        await repository.auth.login(email, password);
-        return true;
-      } catch (e) {
-        print('Login error in VM: $e');
-        return false;
-      }
+      final success = await repository.auth.login(email, password);
+      if (success) await loadUserProfile();
+      return success;
     }
+
     Future<bool> signUp(String email, String password, String name) async {
-      try {
-        await repository.auth.signUp(email, password);
-        // We might need to wait for session in some auth implementations
+      final success = await repository.auth.signUp(email, password, name: name);
+      if (success) {
         final user = await repository.auth.getCurrentUser();
         if (user != null) {
           await repository.storage.addUser(name: name, email: email);
         }
-        return true;
-      } catch (e) {
-        print('Signup error in VM: $e');
-        return false;
+        await loadUserProfile();
       }
+      return success;
     }
   Future<void> logout() async {
     await repository.auth.logout();
@@ -122,12 +115,12 @@ final appProvider = StateNotifierProvider<AppNotifier, AppState>((ref) {
     }
   }
 
-  Future<void> uploadProfilePicture(File image) async {
+  Future<void> uploadProfilePicture(Uint8List bytes, String fileName) async {
     final user = state.currentUser;
     if (user == null) return;
 
     try {
-      final fileId = await repository.files.uploadFile(image);
+      final fileId = await repository.files.uploadFile(bytes, fileName);
       if (fileId != null) {
         final updatedUser = user.rebuild((b) => b..profilePictureId = fileId);
         _updateState(currentUser: updatedUser);

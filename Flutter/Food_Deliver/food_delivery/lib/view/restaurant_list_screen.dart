@@ -3,10 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../extensions/ref_extensions.dart';
 import 'package:go_router/go_router.dart';
 import '../model/restaurant.dart';
-import '../viewmodel/view_model.dart';
-import 'menu_screen.dart';
-import 'cart_screen.dart';
-import 'orders_screen.dart';
+
 
 class RestaurantListScreen extends ConsumerWidget {
   const RestaurantListScreen({super.key});

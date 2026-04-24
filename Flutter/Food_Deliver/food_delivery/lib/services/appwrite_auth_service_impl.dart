@@ -6,7 +6,7 @@ class AppwriteAuthServiceImpl implements AuthenticationService {
   Account get appwrite_account => AppwriteService.account;
 
   @override
-  Future<void> signUp(String email, String password, {String? name}) async {
+  Future<bool> signUp(String email, String password, {String? name}) async {
     try {
       await appwrite_account.create(
         userId: ID.unique(),
@@ -18,20 +18,24 @@ class AppwriteAuthServiceImpl implements AuthenticationService {
         email: email,
         password: password,
       );
+      return true;
     } catch (e) {
       print(e);
+      return false;
     }
   }
 
   @override
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
       await appwrite_account.createEmailPasswordSession(
         email: email,
         password: password,
       );
+      return true;
     } catch (e) {
       print(e);
+      return false;
     }
   }
 

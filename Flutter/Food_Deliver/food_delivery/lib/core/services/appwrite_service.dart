@@ -1,5 +1,5 @@
 import 'package:appwrite/appwrite.dart';
-import '../appwrite_config.dart';
+import 'appwrite_config.dart';
 
 class AppwriteService {
   //client connects to appwrite,send requst,recieve response
